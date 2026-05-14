@@ -334,6 +334,9 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     [ObservableProperty]
     private string generatedCommitMessage = string.Empty;
 
+    [ObservableProperty]
+    private string editableCommitMessage = string.Empty;
+
     public ObservableCollection<string> ChangedFiles { get; } = [];
     public ObservableCollection<DiffLineViewModel> DiffLines { get; } = [];
 
@@ -353,6 +356,7 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
             DiffStatus = "Enter valid task id.";
             DiffText = string.Empty;
             GeneratedCommitMessage = string.Empty;
+            EditableCommitMessage = string.Empty;
             return;
         }
 
@@ -363,6 +367,7 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
             DiffStatus = "Failed to load diff.";
             DiffText = string.Empty;
             GeneratedCommitMessage = string.Empty;
+            EditableCommitMessage = string.Empty;
             return;
         }
 
@@ -385,6 +390,13 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         }
 
         GeneratedCommitMessage = BuildGeneratedCommitMessage(task, ChangedFiles);
+        EditableCommitMessage = GeneratedCommitMessage;
+    }
+
+    [RelayCommand]
+    public void ResetCommitMessage()
+    {
+        EditableCommitMessage = GeneratedCommitMessage;
     }
 
     private static IReadOnlyList<string> ExtractChangedFiles(string diffText)

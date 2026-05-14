@@ -31,9 +31,26 @@
             </Border>
             <TextBlock Text="Generated Commit Message" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
             <Border Padding="8" Background="#0A141E" CornerRadius="8">
-                <TextBlock Text="{Binding GeneratedCommitMessage}"
-                           FontFamily="Cascadia Code, Consolas, monospace"
-                           TextWrapping="Wrap" />
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Template"
+                               FontWeight="SemiBold"
+                               Opacity="0.85" />
+                    <TextBlock Text="{Binding GeneratedCommitMessage}"
+                               FontFamily="Cascadia Code, Consolas, monospace"
+                               TextWrapping="Wrap"
+                               Opacity="0.8" />
+                    <TextBlock Text="Editable"
+                               FontWeight="SemiBold"
+                               Opacity="0.85" />
+                    <TextBox Text="{Binding EditableCommitMessage}"
+                             AcceptsReturn="True"
+                             MinHeight="90"
+                             TextWrapping="Wrap"
+                             FontFamily="Cascadia Code, Consolas, monospace" />
+                    <Button Content="Reset To Template"
+                            HorizontalAlignment="Left"
+                            Command="{Binding ResetCommitMessageCommand}" />
+                </StackPanel>
             </Border>
         </StackPanel>
     </Border>
