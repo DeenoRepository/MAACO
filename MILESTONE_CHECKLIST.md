@@ -226,10 +226,10 @@ tests/
 
 ## Endpoints Tasks
 
-- [ ] `POST /api/tasks`
-- [ ] `GET /api/tasks`
-- [ ] `GET /api/tasks/{id}`
-- [ ] `POST /api/tasks/{id}/cancel`
+- [x] `POST /api/tasks`
+- [x] `GET /api/tasks`
+- [x] `GET /api/tasks/{id}`
+- [x] `POST /api/tasks/{id}/cancel`
 
 ## Endpoints Workflows
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

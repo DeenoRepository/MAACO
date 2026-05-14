@@ -10,6 +10,9 @@ public sealed class TaskRepository(MaacoDbContext dbContext) : ITaskRepository
     public Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TaskItems.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<TaskItem>> ListAsync(CancellationToken cancellationToken) =>
+        await dbContext.TaskItems.OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<TaskItem>> ListByProjectIdAsync(Guid projectId, CancellationToken cancellationToken) =>
         await dbContext.TaskItems.Where(x => x.ProjectId == projectId).OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken);
 
