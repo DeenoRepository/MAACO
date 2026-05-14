@@ -31,8 +31,8 @@
             <views:ScreenView />
         </DataTemplate>
     </Window.DataTemplates>
-    <Grid RowDefinitions="*,Auto" ColumnDefinitions="220,*">
-        <Border Grid.RowSpan="2" Background="#101A24" Padding="14">
+    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="220,*">
+        <Border Grid.RowSpan="3" Background="#101A24" Padding="14">
             <StackPanel Spacing="8">
                 <TextBlock Text="MAACO" FontSize="22" FontWeight="Bold" Margin="4,0,0,8"/>
                 <Button Content="Dashboard" Command="{Binding ShowDashboardCommand}" />
@@ -45,15 +45,36 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Column="1" Margin="12" Padding="12" Background="#0D1F2E">
+        <Border Grid.Row="0" Grid.Column="1" Margin="12,12,12,0" Padding="10" Background="#3D5A17"
+                IsVisible="{Binding HasError}">
+            <DockPanel>
+                <TextBlock Text="{Binding ErrorMessage}" VerticalAlignment="Center" />
+                <Button DockPanel.Dock="Right" Content="Dismiss" Command="{Binding DismissErrorCommand}" />
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Margin="12" Padding="12" Background="#0D1F2E">
             <ContentControl Content="{Binding CurrentView}" />
         </Border>
 
-        <Border Grid.Row="1" Grid.Column="1" Background="#0B1826" Padding="10">
+        <Border Grid.Row="2" Grid.Column="1" Background="#0B1826" Padding="10">
             <DockPanel>
                 <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
                 <ProgressBar DockPanel.Dock="Right" Width="140" IsIndeterminate="{Binding IsBusy}" />
             </DockPanel>
         </Border>
+
+        <ItemsControl Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24">
+            <ItemsControl.ItemsSource>
+                <Binding Path="Notifications" />
+            </ItemsControl.ItemsSource>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <Border Background="#CC1F2933" CornerRadius="8" Padding="10" Margin="0,0,0,8" MaxWidth="360">
+                        <TextBlock Text="{Binding .}" TextWrapping="Wrap" />
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </Window>

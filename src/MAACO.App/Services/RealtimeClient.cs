@@ -9,6 +9,29 @@ public sealed class RealtimeClient : IRealtimeClient
         .WithAutomaticReconnect()
         .Build();
 
+    public event EventHandler<string>? EventReceived;
+    public event EventHandler<string>? ErrorOccurred;
+
+    public RealtimeClient()
+    {
+        connection.On<string>("WorkflowEvent", payload => EventReceived?.Invoke(this, payload));
+        connection.On<string>("WorkflowLog", payload => EventReceived?.Invoke(this, payload));
+        connection.Reconnecting += error =>
+        {
+            ErrorOccurred?.Invoke(this, $"SignalR reconnecting: {error?.Message ?? "transient"}");
+            return Task.CompletedTask;
+        };
+        connection.Closed += error =>
+        {
+            if (error is not null)
+            {
+                ErrorOccurred?.Invoke(this, $"SignalR closed: {error.Message}");
+            }
+
+            return Task.CompletedTask;
+        };
+    }
+
     public bool IsConnected => connection.State == HubConnectionState.Connected;
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -21,10 +44,11 @@ public sealed class RealtimeClient : IRealtimeClient
         try
         {
             await connection.StartAsync(cancellationToken);
+            EventReceived?.Invoke(this, "SignalR connection established.");
         }
-        catch
+        catch (Exception ex)
         {
-            // UI shell should remain functional even if backend/realtime is unavailable.
+            ErrorOccurred?.Invoke(this, $"SignalR unavailable: {ex.Message}");
         }
     }
 

@@ -811,16 +811,16 @@ User Task
 - [x] Sidebar navigation
 - [x] Main content area
 - [x] Status bar
-- [ ] Notifications/toasts
-- [ ] Loading/error states
+- [x] Notifications/toasts
+- [x] Loading/error states
 
 ### Acceptance Criteria
 
-- [ ] App запускается
-- [ ] Навигация работает
-- [ ] API client подключается к backend
-- [ ] SignalR получает events
-- [ ] Ошибки отображаются пользователю
+- [x] App запускается
+- [x] Навигация работает
+- [x] API client подключается к backend
+- [x] SignalR получает events
+- [x] Ошибки отображаются пользователю
 
 ---
 
