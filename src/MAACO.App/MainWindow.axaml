@@ -19,7 +19,7 @@
             <views:TaskCreationView />
         </DataTemplate>
         <DataTemplate DataType="vm:WorkflowMonitorViewModel">
-            <views:ScreenView />
+            <views:WorkflowMonitorView />
         </DataTemplate>
         <DataTemplate DataType="vm:DiffReviewViewModel">
             <views:ScreenView />

@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:WorkflowMonitorViewModel"
+             x:Class="MAACO.App.Views.WorkflowMonitorView">
+    <Border Padding="24" CornerRadius="10" Background="#112A2D34">
+        <StackPanel Spacing="10">
+            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" Margin="0,8,0,0">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Workflow Id:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorkflowId}" TextWrapping="Wrap"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Status:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorkflowStatus}"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Count:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding RetryCount}"/>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

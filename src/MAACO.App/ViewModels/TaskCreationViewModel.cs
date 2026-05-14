@@ -9,6 +9,7 @@ namespace MAACO.App.ViewModels;
 public sealed partial class TaskCreationViewModel(
     IProjectsClient projectsClient,
     ITasksClient tasksClient,
+    IWorkflowsClient workflowsClient,
     INavigationService navigationService,
     WorkflowMonitorViewModel workflowMonitorViewModel) : BaseViewModel, IScreenViewModel
 {
@@ -97,7 +98,22 @@ public sealed partial class TaskCreationViewModel(
                 return;
             }
 
-            Status = $"Task created: {task.Id:D}. Opening workflow monitor.";
+            Status = $"Task created: {task.Id:D}. Starting workflow...";
+            var workflowStart = await workflowsClient.StartWorkflowAsync(
+                task.Id,
+                trigger: "ui-task-start",
+                CancellationToken.None);
+            if (workflowStart is null)
+            {
+                Status = $"Task created: {task.Id:D}, but workflow start failed.";
+                return;
+            }
+
+            workflowMonitorViewModel.SetWorkflowSummary(
+                workflowStart.WorkflowId,
+                workflowStart.Status,
+                retries: 0);
+            Status = $"Workflow queued: {workflowStart.WorkflowId:D}. Opening workflow monitor.";
             navigationService.Navigate(workflowMonitorViewModel);
         }
         finally

@@ -35,3 +35,17 @@ public sealed record TaskDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     long Version);
+
+public sealed record WorkflowStartResponse(
+    Guid WorkflowId,
+    string Status,
+    string Message);
+
+public sealed record WorkflowDto(
+    Guid Id,
+    Guid TaskId,
+    string Status,
+    int RetryCount,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    long Version);

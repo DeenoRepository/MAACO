@@ -1,5 +1,6 @@
-﻿using MAACO.Api.Contracts.Workflows;
+using MAACO.Api.Contracts.Workflows;
 using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Abstractions.Workflows;
 using MAACO.Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,8 +11,72 @@ namespace MAACO.Api.Controllers;
 public sealed class WorkflowsController(
     IWorkflowRepository workflowRepository,
     ILogRepository logRepository,
-    IArtifactRepository artifactRepository) : ControllerBase
+    IArtifactRepository artifactRepository,
+    ITaskRepository taskRepository,
+    IServiceScopeFactory scopeFactory) : ControllerBase
 {
+    private static readonly string[] DefaultWorkflowSteps =
+    [
+        "ProjectScanStep",
+        "PlanningStep",
+        "CodeGenerationStep",
+        "PatchApplicationStep",
+        "TestGenerationStep",
+        "BuildStep",
+        "TestStep",
+        "DebugStep",
+        "DiffStep",
+        "ApprovalStep",
+        "CommitStep",
+        "RollbackStep",
+        "DocumentationStep",
+        "FinalReportStep"
+    ];
+
+    [HttpPost("start")]
+    [ProducesResponseType(typeof(StartWorkflowResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StartWorkflowResponse>> StartWorkflow(
+        [FromBody] StartWorkflowRequest request,
+        CancellationToken cancellationToken)
+    {
+        var task = await taskRepository.GetByIdAsync(request.TaskId, cancellationToken);
+        if (task is null)
+        {
+            return this.NotFoundError($"Task {request.TaskId} not found.");
+        }
+
+        var workflowId = Guid.NewGuid();
+        var correlationId = $"wf-start-{workflowId:N}";
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var orchestrator = scope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+                await orchestrator.ExecuteAsync(
+                    new WorkflowExecutionContext(
+                        task.ProjectId,
+                        task.Id,
+                        workflowId,
+                        request.Trigger,
+                        correlationId),
+                    DefaultWorkflowSteps,
+                    CancellationToken.None);
+            }
+            catch
+            {
+                // Failures are persisted by orchestrator/log pipeline.
+            }
+        });
+
+        return Accepted(new StartWorkflowResponse(
+            workflowId,
+            "Queued",
+            "Workflow start accepted."));
+    }
+
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(WorkflowDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -115,4 +180,3 @@ public sealed class WorkflowsController(
             artifact.UpdatedAt,
             artifact.Version);
 }
-
