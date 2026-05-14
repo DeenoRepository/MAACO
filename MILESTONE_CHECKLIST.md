@@ -527,7 +527,7 @@ tests/
 
 ## Providers
 
-- [ ] Реализовать `FakeLlmProvider`
+- [x] Реализовать `FakeLlmProvider`
 - [ ] Реализовать OpenAI-compatible provider
 - [ ] Реализовать Ollama provider
 - [ ] Добавить provider health check
@@ -545,11 +545,11 @@ tests/
 
 ## Routing
 
-- [ ] Planning → configured strong model
-- [ ] Coding → configured strong model
-- [ ] Debugging → configured strong model
-- [ ] Summary/log analysis → cheap/local model if available
-- [ ] Fallback на default provider
+- [x] Planning → configured strong model
+- [x] Coding → configured strong model
+- [x] Debugging → configured strong model
+- [x] Summary/log analysis → cheap/local model if available
+- [x] Fallback на default provider
 
 ### Acceptance Criteria
 

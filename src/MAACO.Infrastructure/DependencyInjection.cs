@@ -1,6 +1,8 @@
 using MAACO.Core.Abstractions.Events;
+using MAACO.Core.Abstractions.Llm;
 using MAACO.Infrastructure.Events;
 using MAACO.Infrastructure.Events.Handlers;
+using MAACO.Infrastructure.Llm;
 using Microsoft.Extensions.DependencyInjection;
 using MAACO.Core.Domain.Events;
 
@@ -23,6 +25,17 @@ public static class DependencyInjection
         services.AddSingleton<IEventHandler<WorkflowCompletedEvent>, WorkflowCompletedStatusHandler>();
         services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedEventLogHandler>();
         services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedStatusHandler>();
+        services.AddSingleton(new LlmProviderOptions(
+            Provider: "Fake",
+            DefaultModel: "fake-default"));
+        services.AddSingleton(new ModelRoutingPolicy(
+            PlanningModel: "fake-planning",
+            CodingModel: "fake-coding",
+            DebuggingModel: "fake-debugging",
+            SummaryModel: "fake-summary",
+            FallbackModel: "fake-default"));
+        services.AddSingleton<ILlmProvider, FakeLlmProvider>();
+        services.AddSingleton<ILlmGateway, LlmGateway>();
         return services;
     }
 
