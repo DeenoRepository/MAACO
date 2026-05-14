@@ -395,7 +395,7 @@ tests/
 - [x] `TestTool`
 - [x] `GitTool`
 - [x] `DiffTool`
-- [ ] `LogAnalysisTool`
+- [x] `LogAnalysisTool`
 
 ## Tool safety
 
