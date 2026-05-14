@@ -478,7 +478,7 @@ tests/
 - [x] Проверить, что repo является git repo
 - [x] Получать current branch
 - [x] Получать status
-- [ ] Создавать feature branch
+- [x] Создавать feature branch
 - [x] Получать diff
 - [x] Получать changed files
 - [ ] Создавать commit

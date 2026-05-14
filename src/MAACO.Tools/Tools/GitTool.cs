@@ -1,11 +1,16 @@
 using MAACO.Core.Abstractions.Tools;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 
 namespace MAACO.Tools.Tools;
 
 public sealed class GitTool : IAgentTool
 {
+    private static readonly Regex BranchNameRegex = new(
+        "^[a-zA-Z0-9._/-]+$",
+        RegexOptions.Compiled);
+
     public string Name => "GitTool";
 
     public IReadOnlyCollection<ToolPermission> RequiredPermissions =>
@@ -30,7 +35,7 @@ public sealed class GitTool : IAgentTool
         var operation = ParseGitOperation(request.Input);
         if (operation is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact.", request.CorrelationId, startedAt);
+            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>.", request.CorrelationId, startedAt);
         }
 
         try
@@ -72,7 +77,20 @@ public sealed class GitTool : IAgentTool
 
     private static GitOperationSpec? ParseGitOperation(string input)
     {
-        var normalized = input.Trim().ToLowerInvariant();
+        var raw = input.Trim();
+        var normalized = raw.ToLowerInvariant();
+
+        if (normalized.StartsWith("create-branch:", StringComparison.Ordinal))
+        {
+            var branchName = raw["create-branch:".Length..].Trim();
+            if (string.IsNullOrWhiteSpace(branchName) || !BranchNameRegex.IsMatch(branchName))
+            {
+                return null;
+            }
+
+            return new GitOperationSpec("create-branch", $"checkout -b {branchName}");
+        }
+
         return normalized switch
         {
             "" => new GitOperationSpec("status", "status --short"),

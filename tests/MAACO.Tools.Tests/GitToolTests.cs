@@ -131,6 +131,42 @@ public sealed class GitToolTests
         Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_AcceptsCreateBranchOperation_ForGitRepository()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "create-branch:maaco/task-123-feature",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-create-branch");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.DoesNotContain("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsCreateBranchOperation_WithInvalidBranchName()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "create-branch:invalid name with spaces",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-create-branch-invalid");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateWorkspace(bool isGitRepo)
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-gittool-tests", Guid.NewGuid().ToString("N"));
