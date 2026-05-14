@@ -431,14 +431,14 @@ tests/
 
 ## Local sandbox
 
-- [ ] Выполнение процесса в project directory
-- [ ] Timeout
-- [ ] CancellationToken
-- [ ] Capture stdout
-- [ ] Capture stderr
-- [ ] Capture exit code
-- [ ] Environment filtering
-- [ ] Working directory validation
+- [x] Выполнение процесса в project directory
+- [x] Timeout
+- [x] CancellationToken
+- [x] Capture stdout
+- [x] Capture stderr
+- [x] Capture exit code
+- [x] Environment filtering
+- [x] Working directory validation
 
 ## Command safety
 

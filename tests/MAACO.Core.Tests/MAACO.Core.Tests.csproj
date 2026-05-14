@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\MAACO.Api\MAACO.Api.csproj" />
     <ProjectReference Include="..\..\src\MAACO.Infrastructure\MAACO.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\MAACO.Persistence\MAACO.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\MAACO.Sandbox\MAACO.Sandbox.csproj" />
   </ItemGroup>
 
 </Project>
