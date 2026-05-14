@@ -1,5 +1,7 @@
 using MAACO.Agents.Abstractions;
+using MAACO.Agents.Agents;
 using MAACO.Agents.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MAACO.Agents.Tests;
 
@@ -63,6 +65,43 @@ public sealed class AgentRuntimeAbstractionsTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             service.ExecuteAsync("DebuggingAgent", context, cts.Token));
+    }
+
+    [Fact]
+    public async Task AddMaacoAgents_RegistersAllMilestoneAgents()
+    {
+        var services = new ServiceCollection();
+        services.AddMaacoAgents();
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+
+        var registry = scope.ServiceProvider.GetRequiredService<IAgentRegistry>();
+        var execution = scope.ServiceProvider.GetRequiredService<IAgentExecutionService>();
+
+        var expected = new[]
+        {
+            "OrchestratorAgent",
+            "TaskPlannerAgent",
+            "BackendDeveloperAgent",
+            "TestWriterAgent",
+            "DebuggingAgent",
+            "GitManagerAgent",
+            "DocumentationAgent"
+        };
+
+        foreach (var name in expected)
+        {
+            Assert.NotNull(registry.GetByName(name));
+        }
+
+        var result = await execution.ExecuteAsync(
+            "TaskPlannerAgent",
+            new AgentContext(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "plan"),
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Metadata);
+        Assert.Equal("TaskPlannerAgent", result.Metadata!["agent"]);
     }
 
     private sealed class FakeAgent(string name) : IAgent

@@ -579,22 +579,22 @@ tests/
 
 ## Agents
 
-- [ ] `OrchestratorAgent`
-- [ ] `TaskPlannerAgent`
-- [ ] `BackendDeveloperAgent`
-- [ ] `TestWriterAgent`
-- [ ] `DebuggingAgent`
-- [ ] `GitManagerAgent`
-- [ ] `DocumentationAgent`
+- [x] `OrchestratorAgent`
+- [x] `TaskPlannerAgent`
+- [x] `BackendDeveloperAgent`
+- [x] `TestWriterAgent`
+- [x] `DebuggingAgent`
+- [x] `GitManagerAgent`
+- [x] `DocumentationAgent`
 
 ## Agent constraints
 
 - [ ] Agents не пишут файлы напрямую
 - [ ] Agents используют tools
-- [ ] Agents получают scoped context
+- [x] Agents получают scoped context
 - [ ] Agents логируют решения
-- [ ] Agents возвращают structured output
-- [ ] Agents поддерживают cancellation
+- [x] Agents возвращают structured output
+- [x] Agents поддерживают cancellation
 
 ## Prompts
 
