@@ -391,8 +391,8 @@ tests/
 - [x] `FileSystemTool`
 - [x] `ProjectScannerTool`
 - [ ] `CodePatchTool`
-- [ ] `BuildTool`
-- [ ] `TestTool`
+- [x] `BuildTool`
+- [x] `TestTool`
 - [ ] `GitTool`
 - [ ] `DiffTool`
 - [ ] `LogAnalysisTool`
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
