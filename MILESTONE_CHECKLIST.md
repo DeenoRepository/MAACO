@@ -458,11 +458,11 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Build/test команды выполняются
-- [ ] Timeout работает
-- [ ] Cancellation работает
-- [ ] Dangerous commands блокируются
-- [ ] Stdout/stderr сохраняются
+- [x] Build/test команды выполняются
+- [x] Timeout работает
+- [x] Cancellation работает
+- [x] Dangerous commands блокируются
+- [x] Stdout/stderr сохраняются
 
 ---
 

@@ -192,6 +192,24 @@ public sealed class LocalSandboxExecutorTests
         Assert.Contains("***REDACTED***", result.StdOut, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_CanRunDotnetCommand_ForBuildTestWorkflow()
+    {
+        var workspace = CreateWorkspace();
+        var executor = new LocalSandboxExecutor();
+        var request = new SandboxRequest(
+            FileName: "dotnet",
+            Arguments: "--version",
+            WorkspacePath: workspace,
+            Options: new SandboxOptions(TimeSpan.FromSeconds(10)));
+
+        var result = await executor.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, result.ExitCode);
+        Assert.False(string.IsNullOrWhiteSpace(result.StdOut));
+    }
+
     private static string CreateWorkspace()
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-sandbox-tests", Guid.NewGuid().ToString("N"));
