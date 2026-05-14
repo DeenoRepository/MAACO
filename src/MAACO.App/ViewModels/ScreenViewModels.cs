@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MAACO.App.Services;
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 
 public sealed class DashboardViewModel : BaseViewModel, IScreenViewModel
 {
@@ -330,6 +331,7 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     private string diffText = string.Empty;
 
     public ObservableCollection<string> ChangedFiles { get; } = [];
+    public ObservableCollection<DiffLineViewModel> DiffLines { get; } = [];
 
     public DiffReviewViewModel(ITasksClient tasksClient)
     {
@@ -340,6 +342,7 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     public async Task LoadDiffAsync()
     {
         ChangedFiles.Clear();
+        DiffLines.Clear();
 
         if (!Guid.TryParse(TaskId, out var parsedTaskId))
         {
@@ -362,6 +365,11 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         foreach (var file in ExtractChangedFiles(diff.Diff))
         {
             ChangedFiles.Add(file);
+        }
+
+        foreach (var line in BuildDiffLines(diff.Diff))
+        {
+            DiffLines.Add(line);
         }
 
         if (ChangedFiles.Count == 0)
@@ -388,7 +396,35 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
 
         return files.OrderBy(x => x).ToList();
     }
+
+    private static IReadOnlyList<DiffLineViewModel> BuildDiffLines(string diffText)
+    {
+        var lines = diffText.Split(['\r', '\n'], StringSplitOptions.None);
+        var result = new List<DiffLineViewModel>(lines.Length);
+        foreach (var line in lines)
+        {
+            if (line.StartsWith('+') && !line.StartsWith("+++", StringComparison.Ordinal))
+            {
+                result.Add(new DiffLineViewModel(line, "Added", new SolidColorBrush(Color.Parse("#73E2A7"))));
+            }
+            else if (line.StartsWith('-') && !line.StartsWith("---", StringComparison.Ordinal))
+            {
+                result.Add(new DiffLineViewModel(line, "Removed", new SolidColorBrush(Color.Parse("#FF8A8A"))));
+            }
+            else
+            {
+                result.Add(new DiffLineViewModel(line, "Context", new SolidColorBrush(Color.Parse("#D8DEE9"))));
+            }
+        }
+
+        return result;
+    }
 }
+
+public sealed record DiffLineViewModel(
+    string Text,
+    string Kind,
+    IBrush Foreground);
 
 public sealed class SettingsViewModel : BaseViewModel, IScreenViewModel
 {

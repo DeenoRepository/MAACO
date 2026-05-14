@@ -911,7 +911,7 @@ User Task
 - [x] Получить diff по task
 - [x] Показать changed files
 - [x] Показать unified diff
-- [ ] Подсветить added/removed lines
+- [x] Подсветить added/removed lines
 - [ ] Показать generated commit message
 - [ ] Позволить изменить commit message
 

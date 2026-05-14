@@ -18,9 +18,16 @@
             </Border>
             <TextBlock Text="Unified Diff" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
             <Border Padding="8" Background="#0A141E" CornerRadius="8" Height="260">
-                <ScrollViewer>
-                    <TextBlock Text="{Binding DiffText}" FontFamily="Cascadia Code, Consolas, monospace" TextWrapping="Wrap" />
-                </ScrollViewer>
+                <ListBox ItemsSource="{Binding DiffLines}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DiffLineViewModel">
+                            <TextBlock Text="{Binding Text}"
+                                       Foreground="{Binding Foreground}"
+                                       FontFamily="Cascadia Code, Consolas, monospace"
+                                       TextWrapping="NoWrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Border>
         </StackPanel>
     </Border>
