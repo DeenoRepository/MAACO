@@ -113,6 +113,24 @@ public sealed class GitToolTests
         Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_AcceptsPatchArtifactOperation_ForGitRepository()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "patch-artifact",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-patch");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.DoesNotContain("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateWorkspace(bool isGitRepo)
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-gittool-tests", Guid.NewGuid().ToString("N"));

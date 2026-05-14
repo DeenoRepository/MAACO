@@ -27,26 +27,34 @@ public sealed class GitTool : IAgentTool
             return Fail("Target path is not a git repository.", request.CorrelationId, startedAt);
         }
 
-        var command = ParseGitCommand(request.Input);
-        if (command is null)
+        var operation = ParseGitOperation(request.Input);
+        if (operation is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files.", request.CorrelationId, startedAt);
+            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact.", request.CorrelationId, startedAt);
         }
 
         try
         {
             var (exitCode, stdOut, stdErr) = await RunProcessAsync(
                 "git",
-                command,
+                operation.Command,
                 workingDirectory,
                 cancellationToken);
 
+            string? artifactPath = null;
+            if (exitCode == 0 && operation.GeneratesPatchArtifact)
+            {
+                artifactPath = SavePatchArtifact(workingDirectory, stdOut);
+            }
+
             var output = JsonSerializer.Serialize(new
             {
-                command = $"git {command}",
+                command = $"git {operation.Command}",
+                operation = operation.Name,
                 exitCode,
                 stdout = Truncate(stdOut, 20000),
-                stderr = Truncate(stdErr, 20000)
+                stderr = Truncate(stdErr, 20000),
+                artifactPath
             });
 
             return new ToolResult(
@@ -62,18 +70,19 @@ public sealed class GitTool : IAgentTool
         }
     }
 
-    private static string? ParseGitCommand(string input)
+    private static GitOperationSpec? ParseGitOperation(string input)
     {
         var normalized = input.Trim().ToLowerInvariant();
         return normalized switch
         {
-            "" => "status --short",
-            "status" => "status --short",
-            "current-branch" => "branch --show-current",
-            "branch" => "branch --show-current",
-            "log" => "log --oneline -n 20",
-            "diff" => "diff -- .",
-            "changed-files" => "status --short --untracked-files=all",
+            "" => new GitOperationSpec("status", "status --short"),
+            "status" => new GitOperationSpec("status", "status --short"),
+            "current-branch" => new GitOperationSpec("current-branch", "branch --show-current"),
+            "branch" => new GitOperationSpec("branch", "branch --show-current"),
+            "log" => new GitOperationSpec("log", "log --oneline -n 20"),
+            "diff" => new GitOperationSpec("diff", "diff -- ."),
+            "changed-files" => new GitOperationSpec("changed-files", "status --short --untracked-files=all"),
+            "patch-artifact" => new GitOperationSpec("patch-artifact", "diff -- .", GeneratesPatchArtifact: true),
             _ => null
         };
     }
@@ -114,6 +123,16 @@ public sealed class GitTool : IAgentTool
         return Directory.Exists(gitPath) || File.Exists(gitPath);
     }
 
+    private static string SavePatchArtifact(string workingDirectory, string patchContent)
+    {
+        var artifactsDirectory = Path.Combine(workingDirectory, ".maaco", "artifacts");
+        Directory.CreateDirectory(artifactsDirectory);
+        var fileName = $"patch-{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}.patch";
+        var fullPath = Path.Combine(artifactsDirectory, fileName);
+        File.WriteAllText(fullPath, patchContent);
+        return fullPath;
+    }
+
     private static ToolResult Fail(string error, string? correlationId, DateTimeOffset startedAt) =>
         new(
             Succeeded: false,
@@ -121,4 +140,9 @@ public sealed class GitTool : IAgentTool
             Error: error,
             Duration: DateTimeOffset.UtcNow - startedAt,
             CorrelationId: correlationId);
+
+    private sealed record GitOperationSpec(
+        string Name,
+        string Command,
+        bool GeneratesPatchArtifact = false);
 }

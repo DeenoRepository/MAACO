@@ -483,7 +483,7 @@ tests/
 - [x] Получать changed files
 - [ ] Создавать commit
 - [ ] Откатывать uncommitted changes
-- [ ] Генерировать patch artifact
+- [x] Генерировать patch artifact
 
 ## Safety
 
