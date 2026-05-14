@@ -1,4 +1,5 @@
-﻿using MAACO.Api.Middleware;
+﻿using FluentValidation;
+using MAACO.Api.Middleware;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -29,11 +31,13 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
 builder.Services
     .AddOpenTelemetry()
     .WithTracing(tracing =>
     {
-        tracing            .AddAspNetCoreInstrumentation()
+        tracing
+            .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddConsoleExporter();
     });
@@ -60,4 +64,3 @@ app.UseCors("DesktopUi");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-

@@ -11,6 +11,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M2 progress: `DbContext`, `DbSet<>`, mappings, indexes, and repository interfaces/implementations added
 - M2 progress: `InitialCreate` migration added and applied, auto-migrate + seed on API startup enabled
 - M3 progress: API skeleton wired (DI, EF Core, Serilog, OpenTelemetry, Swagger, CORS, global exception middleware)
+- M3 progress: implemented `POST /api/projects` and `GET /api/projects` with DTO + FluentValidation
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout
