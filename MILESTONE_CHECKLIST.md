@@ -553,11 +553,11 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Fake provider работает без API key
+- [x] Fake provider работает без API key
 - [ ] OpenAI-compatible provider вызывается через config
 - [ ] Ollama provider вызывается через config
-- [ ] Все LLM calls сохраняются
-- [ ] Secrets не попадают в logs
+- [x] Все LLM calls сохраняются
+- [x] Secrets не попадают в logs
 
 ---
 
