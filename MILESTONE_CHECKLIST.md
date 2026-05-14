@@ -714,7 +714,7 @@ User Task
 - [x] Keyword search
 - [x] Limit top N records
 - [x] Exclude stale records by status
-- [ ] Context assembly для agents
+- [x] Context assembly для agents
 
 ## Future-ready fields
 
@@ -726,9 +726,9 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Agents получают project context
+- [x] Agents получают project context
 - [ ] Build/test failures сохраняются
-- [ ] Previous task summaries доступны
+- [x] Previous task summaries доступны
 - [ ] Schema готова к vector search
 
 ---

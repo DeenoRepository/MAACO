@@ -17,4 +17,8 @@ public interface IMemoryService
         string keyword,
         int topN,
         CancellationToken cancellationToken);
+    Task<AgentMemoryContext> BuildAgentContextAsync(
+        Guid projectId,
+        int topN,
+        CancellationToken cancellationToken);
 }

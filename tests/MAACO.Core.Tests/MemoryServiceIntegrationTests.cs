@@ -277,4 +277,66 @@ public sealed class MemoryServiceIntegrationTests
             Assert.DoesNotContain(records, x => x.Key.Contains(staleTaskId.ToString("D"), StringComparison.OrdinalIgnoreCase));
         }
     }
+
+    [Fact]
+    public async Task BuildAgentContextAsync_ReturnsStructuredProjectContext()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        Guid projectId;
+        Guid taskId;
+
+        await using (var seedScope = provider.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "context-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+
+            var task = new TaskItem { ProjectId = projectId, Title = "context-task" };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+        }
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var memoryService = runScope.ServiceProvider.GetRequiredService<IMemoryService>();
+            await memoryService.SaveProjectSummaryAsync(projectId, "proj summary", CancellationToken.None);
+            await memoryService.SaveTaskSummaryAsync(taskId, "task summary", CancellationToken.None);
+            await memoryService.SaveDecisionAsync(projectId, "decision A", CancellationToken.None);
+            await memoryService.SaveBuildFailureAsync(taskId, "build failed on tests", CancellationToken.None);
+            await memoryService.SaveAgentNoteAsync(taskId, "agent note A", CancellationToken.None);
+            await memoryService.SaveFileSummaryAsync(projectId, "src/app.cs", "file summary", CancellationToken.None);
+
+            var context = await memoryService.BuildAgentContextAsync(projectId, 20, CancellationToken.None);
+
+            Assert.Equal(projectId, context.ProjectId);
+            Assert.Contains("proj summary", context.ProjectSummaries);
+            Assert.Contains("task summary", context.TaskSummaries);
+            Assert.Contains("decision A", context.Decisions);
+            Assert.Contains("build failed on tests", context.BuildFailures);
+            Assert.Contains("agent note A", context.AgentNotes);
+            Assert.Contains("file summary", context.FileSummaries);
+        }
+    }
 }

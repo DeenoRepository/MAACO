@@ -77,6 +77,32 @@ public sealed class MemoryService(
             .ToList();
     }
 
+    public async Task<AgentMemoryContext> BuildAgentContextAsync(
+        Guid projectId,
+        int topN,
+        CancellationToken cancellationToken)
+    {
+        if (topN <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(topN), "topN must be greater than zero.");
+        }
+
+        var records = await ListByProjectIdAsync(projectId, cancellationToken);
+        var limited = records.Take(topN).ToList();
+
+        static IReadOnlyList<string> Values(IReadOnlyList<MemoryRecord> source, Func<MemoryRecord, bool> predicate) =>
+            source.Where(predicate).Select(x => x.Value).Distinct(StringComparer.Ordinal).ToList();
+
+        return new AgentMemoryContext(
+            ProjectId: projectId,
+            ProjectSummaries: Values(limited, x => x.Key == "ProjectSummary"),
+            TaskSummaries: Values(limited, x => x.Key.StartsWith("TaskSummary:", StringComparison.OrdinalIgnoreCase)),
+            Decisions: Values(limited, x => x.Key == "Decision"),
+            BuildFailures: Values(limited, x => x.Key.StartsWith("BuildFailure:", StringComparison.OrdinalIgnoreCase)),
+            AgentNotes: Values(limited, x => x.Key.StartsWith("AgentNote:", StringComparison.OrdinalIgnoreCase)),
+            FileSummaries: Values(limited, x => x.Key.StartsWith("FileSummary:", StringComparison.OrdinalIgnoreCase)));
+    }
+
     private async Task SaveAsync(
         Guid projectId,
         MemoryRecordType type,
