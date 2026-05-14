@@ -918,7 +918,7 @@ User Task
 ## Approval
 
 - [x] Approve button
-- [ ] Reject button
+- [x] Reject button
 - [ ] Reject with reason
 - [ ] Approve вызывает commit
 - [ ] Reject вызывает rollback

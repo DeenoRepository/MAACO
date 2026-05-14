@@ -421,6 +421,25 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         ApprovalStatusMessage = $"Approve: {response.Status} - {response.Message}";
     }
 
+    [RelayCommand]
+    public async Task RejectAsync()
+    {
+        if (!Guid.TryParse(TaskId, out var parsedTaskId))
+        {
+            ApprovalStatusMessage = "Enter valid task id before reject.";
+            return;
+        }
+
+        var response = await tasksClient.RollbackTaskAsync(parsedTaskId, CancellationToken.None);
+        if (response is null)
+        {
+            ApprovalStatusMessage = "Reject request failed.";
+            return;
+        }
+
+        ApprovalStatusMessage = $"Reject: {response.Status} - {response.Message}";
+    }
+
     private static IReadOnlyList<string> ExtractChangedFiles(string diffText)
     {
         var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
