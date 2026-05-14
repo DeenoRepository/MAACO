@@ -64,3 +64,8 @@ public sealed record TaskDiffResponse(
     Guid TaskId,
     string Diff,
     string Status);
+
+public sealed record TaskActionResponse(
+    Guid TaskId,
+    string Status,
+    string Message);

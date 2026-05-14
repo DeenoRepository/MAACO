@@ -46,4 +46,15 @@ public sealed class TasksClient(HttpClient httpClient) : ITasksClient
 
         return await response.Content.ReadFromJsonAsync<TaskDiffResponse>(cancellationToken: cancellationToken);
     }
+
+    public async Task<TaskActionResponse?> CommitTaskAsync(Guid taskId, CancellationToken cancellationToken)
+    {
+        var response = await httpClient.PostAsync($"api/tasks/{taskId:D}/commit", content: null, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<TaskActionResponse>(cancellationToken: cancellationToken);
+    }
 }

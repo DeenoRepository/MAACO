@@ -917,7 +917,7 @@ User Task
 
 ## Approval
 
-- [ ] Approve button
+- [x] Approve button
 - [ ] Reject button
 - [ ] Reject with reason
 - [ ] Approve вызывает commit

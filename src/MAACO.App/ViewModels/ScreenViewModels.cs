@@ -337,6 +337,9 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     [ObservableProperty]
     private string editableCommitMessage = string.Empty;
 
+    [ObservableProperty]
+    private string approvalStatusMessage = "No approval action yet.";
+
     public ObservableCollection<string> ChangedFiles { get; } = [];
     public ObservableCollection<DiffLineViewModel> DiffLines { get; } = [];
 
@@ -397,6 +400,25 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     public void ResetCommitMessage()
     {
         EditableCommitMessage = GeneratedCommitMessage;
+    }
+
+    [RelayCommand]
+    public async Task ApproveAsync()
+    {
+        if (!Guid.TryParse(TaskId, out var parsedTaskId))
+        {
+            ApprovalStatusMessage = "Enter valid task id before approve.";
+            return;
+        }
+
+        var response = await tasksClient.CommitTaskAsync(parsedTaskId, CancellationToken.None);
+        if (response is null)
+        {
+            ApprovalStatusMessage = "Approve request failed.";
+            return;
+        }
+
+        ApprovalStatusMessage = $"Approve: {response.Status} - {response.Message}";
     }
 
     private static IReadOnlyList<string> ExtractChangedFiles(string diffText)
