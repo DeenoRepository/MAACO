@@ -98,9 +98,10 @@ public sealed class WorkflowOrchestratorIntegrationTests
                 .ToList();
             var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
 
-            Assert.Equal(WorkflowStatus.Completed, workflow.Status);
+            Assert.Equal(WorkflowStatus.WaitingForApproval, workflow.Status);
             Assert.Equal(14, steps.Count);
-            Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
+            Assert.All(steps.Where(step => step.Order <= 10), step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
+            Assert.All(steps.Where(step => step.Order > 10), step => Assert.Equal(WorkflowStepStatus.Pending, step.Status));
             var orderedNames = steps.OrderBy(x => x.Order).Select(x => x.Name).ToList();
             Assert.Equal(
                 [
@@ -120,7 +121,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
                     "FinalReportStep"
                 ],
                 orderedNames);
-            Assert.Equal(14, artifacts.Count);
+            Assert.Equal(10, artifacts.Count);
             Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
             Assert.Contains(logs, x => x.Message.Contains("Executed ProjectScanStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed PlanningStep", StringComparison.Ordinal));
@@ -132,10 +133,10 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Contains(logs, x => x.Message.Contains("Executed DebugStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed DiffStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed ApprovalStep", StringComparison.Ordinal));
-            Assert.Contains(logs, x => x.Message.Contains("Executed CommitStep", StringComparison.Ordinal));
-            Assert.Contains(logs, x => x.Message.Contains("Executed RollbackStep", StringComparison.Ordinal));
-            Assert.Contains(logs, x => x.Message.Contains("Executed DocumentationStep", StringComparison.Ordinal));
-            Assert.Contains(logs, x => x.Message.Contains("Executed FinalReportStep", StringComparison.Ordinal));
+            Assert.DoesNotContain(logs, x => x.Message.Contains("Executed CommitStep", StringComparison.Ordinal));
+            Assert.DoesNotContain(logs, x => x.Message.Contains("Executed RollbackStep", StringComparison.Ordinal));
+            Assert.DoesNotContain(logs, x => x.Message.Contains("Executed DocumentationStep", StringComparison.Ordinal));
+            Assert.DoesNotContain(logs, x => x.Message.Contains("Executed FinalReportStep", StringComparison.Ordinal));
         }
     }
 

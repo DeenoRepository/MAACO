@@ -926,7 +926,7 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Workflow останавливается на approval
+- [x] Workflow останавливается на approval
 - [x] Пользователь видит diff
 - [ ] Approve создает commit
 - [ ] Reject откатывает изменения

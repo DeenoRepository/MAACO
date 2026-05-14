@@ -18,11 +18,12 @@ public sealed class WorkflowStepExecutor(
     private readonly IReadOnlyDictionary<string, IWorkflowStepHandler> handlers =
         stepHandlers.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
 
-    public async Task ExecuteAsync(
+    public async Task<WorkflowExecutionOutcome> ExecuteAsync(
         WorkflowExecutionContext context,
         IReadOnlyList<WorkflowStep> steps,
         CancellationToken cancellationToken)
     {
+        var waitingForApproval = false;
         foreach (var step in steps.OrderBy(x => x.Order))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -114,7 +115,24 @@ public sealed class WorkflowStepExecutor(
                     DateTimeOffset.UtcNow,
                     context.CorrelationId),
                 cancellationToken);
+
+            if (string.Equals(step.Name, "ApprovalStep", StringComparison.OrdinalIgnoreCase))
+            {
+                waitingForApproval = true;
+                await eventBus.PublishAsync(
+                    new ApprovalRequestedEvent(
+                        Guid.NewGuid(),
+                        context.WorkflowId,
+                        DateTimeOffset.UtcNow,
+                        context.CorrelationId),
+                    cancellationToken);
+                break;
+            }
         }
+
+        return waitingForApproval
+            ? WorkflowExecutionOutcome.WaitingForApproval
+            : WorkflowExecutionOutcome.Completed;
     }
 
     private async Task<bool> ExecuteDebugLoopAsync(
@@ -267,4 +285,10 @@ public sealed class WorkflowStepExecutor(
 
         return DefaultMaxDebugRetries;
     }
+}
+
+public enum WorkflowExecutionOutcome
+{
+    Completed = 0,
+    WaitingForApproval = 1
 }
