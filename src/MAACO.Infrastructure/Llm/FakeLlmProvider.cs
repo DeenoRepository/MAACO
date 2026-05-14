@@ -7,6 +7,12 @@ public sealed class FakeLlmProvider : ILlmProvider
 {
     public string Name => "Fake";
 
+    public Task<bool> HealthCheckAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(true);
+    }
+
     public Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

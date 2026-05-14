@@ -528,11 +528,11 @@ tests/
 ## Providers
 
 - [x] Реализовать `FakeLlmProvider`
-- [ ] Реализовать OpenAI-compatible provider
-- [ ] Реализовать Ollama provider
-- [ ] Добавить provider health check
-- [ ] Добавить retry transient errors
-- [ ] Добавить timeout
+- [x] Реализовать OpenAI-compatible provider
+- [x] Реализовать Ollama provider
+- [x] Добавить provider health check
+- [x] Добавить retry transient errors
+- [x] Добавить timeout
 
 ## Logging/cost
 
