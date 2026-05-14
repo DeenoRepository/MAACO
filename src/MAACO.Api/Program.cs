@@ -50,6 +50,7 @@ builder.Services.AddMaacoPersistence(connectionString);
 builder.Services.AddMaacoInfrastructure();
 
 var app = builder.Build();
+app.Services.UseMaacoInfrastructure();
 
 if (app.Environment.IsDevelopment())
 {
