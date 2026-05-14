@@ -393,8 +393,8 @@ tests/
 - [ ] `CodePatchTool`
 - [x] `BuildTool`
 - [x] `TestTool`
-- [ ] `GitTool`
-- [ ] `DiffTool`
+- [x] `GitTool`
+- [x] `DiffTool`
 - [ ] `LogAnalysisTool`
 
 ## Tool safety
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

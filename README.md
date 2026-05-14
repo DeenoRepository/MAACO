@@ -14,6 +14,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M6 progress: tool abstractions and registry foundation added (`IAgentTool`, `ToolRequest/ToolResult`, `ToolPermission`, `ToolRegistry`, DI, logging, timeout/cancellation)
 - M6 progress: FileSystemTool and ProjectScannerTool added with permission checks, workspace boundary, capped output and normalized errors
 - M6 progress: BuildTool and TestTool added (dotnet build/test execution with structured output, timeout/cancellation)
+- M6 progress: GitTool and DiffTool added (safe read-only git status/branch/log and diff output)
 - M5 progress: repository path validation added (exists/readable/.git, restricted dirs block, normalized path)
 - M5 progress: file scanner added with ignore rules and limits (size/count), integrated into `POST /api/projects/{id}/scan`
 - M5 progress: stack detection added (.NET/Node.js/Python/Generic) with solution/project/manifests discovery

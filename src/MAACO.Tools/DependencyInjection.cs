@@ -12,6 +12,8 @@ public static class DependencyInjection
         services.AddSingleton<IAgentTool, ProjectScannerTool>();
         services.AddSingleton<IAgentTool, BuildTool>();
         services.AddSingleton<IAgentTool, TestTool>();
+        services.AddSingleton<IAgentTool, GitTool>();
+        services.AddSingleton<IAgentTool, DiffTool>();
         services.AddSingleton<IToolRegistry, ToolRegistry>();
         return services;
     }
