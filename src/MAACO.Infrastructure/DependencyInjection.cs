@@ -13,12 +13,16 @@ public static class DependencyInjection
         services.AddSingleton<IEventBus, InMemoryEventBus>();
         services.AddSingleton<IEventHandler<TaskCreatedEvent>, TaskCreatedEventLogHandler>();
         services.AddSingleton<IEventHandler<WorkflowStartedEvent>, WorkflowStartedEventLogHandler>();
+        services.AddSingleton<IEventHandler<WorkflowStartedEvent>, WorkflowStartedStatusHandler>();
         services.AddSingleton<IEventHandler<WorkflowStepStartedEvent>, WorkflowStepStartedEventLogHandler>();
         services.AddSingleton<IEventHandler<WorkflowStepCompletedEvent>, WorkflowStepCompletedEventLogHandler>();
         services.AddSingleton<IEventHandler<WorkflowStepFailedEvent>, WorkflowStepFailedEventLogHandler>();
         services.AddSingleton<IEventHandler<ApprovalRequestedEvent>, ApprovalRequestedEventLogHandler>();
+        services.AddSingleton<IEventHandler<ApprovalRequestedEvent>, ApprovalRequestedStatusHandler>();
         services.AddSingleton<IEventHandler<WorkflowCompletedEvent>, WorkflowCompletedEventLogHandler>();
+        services.AddSingleton<IEventHandler<WorkflowCompletedEvent>, WorkflowCompletedStatusHandler>();
         services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedEventLogHandler>();
+        services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedStatusHandler>();
         return services;
     }
 

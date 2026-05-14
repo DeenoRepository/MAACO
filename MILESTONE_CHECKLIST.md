@@ -302,7 +302,7 @@ tests/
 - [ ] UI/тестовый клиент получает realtime события
 - [ ] События сохраняются в логах
 - [ ] События имеют correlation id
-- [ ] Workflow status обновляется корректно
+- [x] Workflow status обновляется корректно
 
 ---
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

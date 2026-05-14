@@ -12,6 +12,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M4 progress: added `IEventBus` and in-memory event bus with DI registration
 - M4 progress: added event handlers with `LogEvent` persistence, `workflowId`, and `correlationId` support
 - M4 progress: added SignalR WorkflowHub (`/workflowHub`), workflow/project groups, and realtime event publishers
+- M4 progress: added workflow status projection handlers from events (`Running`, `WaitingForApproval`, `Completed`, `Failed`)
 - M2 progress: `DbContext`, `DbSet<>`, mappings, indexes, and repository interfaces/implementations added
 - M2 progress: `InitialCreate` migration added and applied, auto-migrate + seed on API startup enabled
 - M3 progress: API skeleton wired (DI, EF Core, Serilog, OpenTelemetry, Swagger, CORS, global exception middleware)
