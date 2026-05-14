@@ -750,10 +750,10 @@ User Task
 
 ## Test
 
-- [ ] Выполнять detected test command
-- [ ] Сохранять test output
-- [ ] Определять failed tests
-- [ ] Публиковать events
+- [x] Выполнять detected test command
+- [x] Сохранять test output
+- [x] Определять failed tests
+- [x] Публиковать events
 
 ## Log analysis
 
