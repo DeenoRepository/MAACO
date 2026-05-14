@@ -685,8 +685,8 @@ User Task
 - [x] Steps выполняются последовательно
 - [x] State сохраняется после каждого step
 - [x] Failure не теряет контекст
-- [ ] Debug loop работает
-- [ ] Workflow можно cancel
+- [x] Debug loop работает
+- [x] Workflow можно cancel
 
 ---
 
