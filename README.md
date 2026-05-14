@@ -13,6 +13,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M3 progress: API skeleton wired (DI, EF Core, Serilog, OpenTelemetry, Swagger, CORS, global exception middleware)
 - M3 progress: implemented `POST /api/projects` and `GET /api/projects` with DTO + FluentValidation
 - M3 progress: implemented `GET /api/projects/{id}`
+- M3 progress: implemented `POST /api/projects/{id}/scan` (queued stub for scanner integration in M5)
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout
