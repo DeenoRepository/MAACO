@@ -204,4 +204,77 @@ public sealed class MemoryServiceIntegrationTests
                     x.Value.Contains("pipeline", StringComparison.OrdinalIgnoreCase)));
         }
     }
+
+    [Fact]
+    public async Task ListByProjectId_ExcludesRecordsForStaleTaskStatuses()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        Guid projectId;
+        Guid activeTaskId;
+        Guid staleTaskId;
+
+        await using (var seedScope = provider.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "memory-stale-filter-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+
+            var activeTask = new TaskItem
+            {
+                ProjectId = projectId,
+                Title = "active-task",
+                Status = MAACO.Core.Domain.Enums.TaskStatus.Running
+            };
+            var staleTask = new TaskItem
+            {
+                ProjectId = projectId,
+                Title = "stale-task",
+                Status = MAACO.Core.Domain.Enums.TaskStatus.Completed
+            };
+            await db.TaskItems.AddRangeAsync(activeTask, staleTask);
+            await db.SaveChangesAsync();
+            activeTaskId = activeTask.Id;
+            staleTaskId = staleTask.Id;
+        }
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var memoryService = runScope.ServiceProvider.GetRequiredService<IMemoryService>();
+            await memoryService.SaveProjectSummaryAsync(projectId, "global summary", CancellationToken.None);
+            await memoryService.SaveTaskSummaryAsync(activeTaskId, "active summary", CancellationToken.None);
+            await memoryService.SaveTaskSummaryAsync(staleTaskId, "stale summary", CancellationToken.None);
+            await memoryService.SaveBuildFailureAsync(staleTaskId, "stale build failure", CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var memoryService = verifyScope.ServiceProvider.GetRequiredService<IMemoryService>();
+            var records = await memoryService.ListByProjectIdAsync(projectId, CancellationToken.None);
+
+            Assert.Contains(records, x => x.Key == "ProjectSummary");
+            Assert.Contains(records, x => x.Key == $"TaskSummary:{activeTaskId:D}");
+            Assert.DoesNotContain(records, x => x.Key.Contains(staleTaskId.ToString("D"), StringComparison.OrdinalIgnoreCase));
+        }
+    }
 }

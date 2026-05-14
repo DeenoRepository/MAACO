@@ -713,7 +713,7 @@ User Task
 - [x] Получать memory по task id
 - [x] Keyword search
 - [x] Limit top N records
-- [ ] Exclude stale records by status
+- [x] Exclude stale records by status
 - [ ] Context assembly для agents
 
 ## Future-ready fields
