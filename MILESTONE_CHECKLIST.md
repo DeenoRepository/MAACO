@@ -482,7 +482,7 @@ tests/
 - [x] Получать diff
 - [x] Получать changed files
 - [ ] Создавать commit
-- [ ] Откатывать uncommitted changes
+- [x] Откатывать uncommitted changes
 - [x] Генерировать patch artifact
 
 ## Safety

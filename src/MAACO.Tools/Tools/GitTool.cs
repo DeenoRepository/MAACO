@@ -35,7 +35,7 @@ public sealed class GitTool : IAgentTool
         var operation = ParseGitOperation(request.Input);
         if (operation is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>.", request.CorrelationId, startedAt);
+            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, rollback-uncommitted.", request.CorrelationId, startedAt);
         }
 
         try
@@ -101,6 +101,7 @@ public sealed class GitTool : IAgentTool
             "diff" => new GitOperationSpec("diff", "diff -- ."),
             "changed-files" => new GitOperationSpec("changed-files", "status --short --untracked-files=all"),
             "patch-artifact" => new GitOperationSpec("patch-artifact", "diff -- .", GeneratesPatchArtifact: true),
+            "rollback-uncommitted" => new GitOperationSpec("rollback-uncommitted", "restore --staged --worktree -- ."),
             _ => null
         };
     }
