@@ -1,4 +1,6 @@
 using MAACO.Core.Abstractions.Tools;
+using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Domain.Entities;
 using MAACO.Tools.Tools;
 using System.Reflection;
 
@@ -302,6 +304,27 @@ public sealed class GitToolTests
         Assert.DoesNotContain("old/file.txt", paths);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_PersistsGitOperation_WhenTaskIdProvidedInJsonEnvelope()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var repository = new InMemoryGitOperationRepository();
+        var tool = new GitTool(repository);
+        var taskId = Guid.NewGuid();
+        var request = new ToolRequest(
+            tool.Name,
+            $$"""{"operation":"push origin main","taskId":"{{taskId}}"}""",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-gitop-persist");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Single(repository.Items);
+        Assert.Equal(taskId, repository.Items[0].TaskId);
+    }
+
     private static string CreateWorkspace(bool isGitRepo)
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-gittool-tests", Guid.NewGuid().ToString("N"));
@@ -312,5 +335,18 @@ public sealed class GitToolTests
         }
 
         return path;
+    }
+
+    private sealed class InMemoryGitOperationRepository : IGitOperationRepository
+    {
+        public List<GitOperation> Items { get; } = [];
+
+        public Task AddAsync(GitOperation gitOperation, CancellationToken cancellationToken)
+        {
+            Items.Add(gitOperation);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

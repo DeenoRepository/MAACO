@@ -1,11 +1,14 @@
 using MAACO.Core.Abstractions.Tools;
+using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Domain.Entities;
+using MAACO.Core.Domain.Enums;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace MAACO.Tools.Tools;
 
-public sealed class GitTool : IAgentTool
+public sealed class GitTool(IGitOperationRepository? gitOperationRepository = null) : IAgentTool
 {
     private static readonly Regex BranchNameRegex = new(
         "^[a-zA-Z0-9._/-]+$",
@@ -21,6 +24,7 @@ public sealed class GitTool : IAgentTool
     public async Task<ToolResult> ExecuteAsync(ToolRequest request, CancellationToken cancellationToken)
     {
         var startedAt = DateTimeOffset.UtcNow;
+        var (operationInput, taskId) = ParseOperationInputAndTaskId(request.Input);
         var workingDirectory = Path.GetFullPath(request.WorkspacePath);
         if (!ToolPathSafety.IsWithinWorkspace(request.WorkspacePath, workingDirectory))
         {
@@ -32,27 +36,33 @@ public sealed class GitTool : IAgentTool
             return Fail("Target path is not a git repository.", request.CorrelationId, startedAt);
         }
 
-        var forbiddenReason = GetForbiddenOperationReason(request.Input);
+        var forbiddenReason = GetForbiddenOperationReason(operationInput);
         if (forbiddenReason is not null)
         {
-            return Fail(forbiddenReason, request.CorrelationId, startedAt);
+            var forbiddenResult = Fail(forbiddenReason, request.CorrelationId, startedAt);
+            await PersistGitOperationAsync(taskId, operationInput, forbiddenResult, cancellationToken);
+            return forbiddenResult;
         }
 
-        var operation = ParseGitOperation(request.Input);
+        var operation = ParseGitOperation(operationInput);
         if (operation is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, commit-approved:<message>, rollback-uncommitted.", request.CorrelationId, startedAt);
+            var unsupportedResult = Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, commit-approved:<message>, rollback-uncommitted.", request.CorrelationId, startedAt);
+            await PersistGitOperationAsync(taskId, operationInput, unsupportedResult, cancellationToken);
+            return unsupportedResult;
         }
 
         try
         {
             if (operation.Name == "rollback-uncommitted")
             {
-                return await ExecuteRollbackUncommittedAsync(
+                var rollbackResult = await ExecuteRollbackUncommittedAsync(
                     request,
                     startedAt,
                     workingDirectory,
                     cancellationToken);
+                await PersistGitOperationAsync(taskId, operation.Name, rollbackResult, cancellationToken);
+                return rollbackResult;
             }
 
             var (exitCode, stdOut, stdErr) = await RunProcessAsync(
@@ -77,16 +87,60 @@ public sealed class GitTool : IAgentTool
                 artifactPath
             });
 
-            return new ToolResult(
+            var result = new ToolResult(
                 Succeeded: exitCode == 0,
                 Output: output,
                 Error: exitCode == 0 ? null : "Git command failed.",
                 Duration: DateTimeOffset.UtcNow - startedAt,
                 CorrelationId: request.CorrelationId);
+            await PersistGitOperationAsync(taskId, operation.Name, result, cancellationToken);
+            return result;
         }
         catch (Exception ex)
         {
-            return Fail($"GitTool failed: {ex.Message}", request.CorrelationId, startedAt);
+            var failure = Fail($"GitTool failed: {ex.Message}", request.CorrelationId, startedAt);
+            await PersistGitOperationAsync(taskId, operationInput, failure, cancellationToken);
+            return failure;
+        }
+    }
+
+    private static (string OperationInput, Guid? TaskId) ParseOperationInputAndTaskId(string input)
+    {
+        var raw = input?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return (string.Empty, null);
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(raw);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+            {
+                return (raw, null);
+            }
+
+            var root = document.RootElement;
+            if (!root.TryGetProperty("operation", out var operationProperty) ||
+                operationProperty.ValueKind != JsonValueKind.String)
+            {
+                return (raw, null);
+            }
+
+            var operation = operationProperty.GetString() ?? string.Empty;
+            Guid? taskId = null;
+            if (root.TryGetProperty("taskId", out var taskIdProperty) &&
+                taskIdProperty.ValueKind == JsonValueKind.String &&
+                Guid.TryParse(taskIdProperty.GetString(), out var parsedTaskId))
+            {
+                taskId = parsedTaskId;
+            }
+
+            return (operation.Trim(), taskId);
+        }
+        catch
+        {
+            return (raw, null);
         }
     }
 
@@ -151,6 +205,66 @@ public sealed class GitTool : IAgentTool
         }
 
         return null;
+    }
+
+    private async Task PersistGitOperationAsync(
+        Guid? taskId,
+        string operationInput,
+        ToolResult result,
+        CancellationToken cancellationToken)
+    {
+        if (gitOperationRepository is null || taskId is null || taskId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            var gitOperation = new GitOperation
+            {
+                TaskId = taskId.Value,
+                Type = MapGitOperationType(operationInput),
+                Succeeded = result.Succeeded,
+                Details = Truncate(string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error!, 2000),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+
+            await gitOperationRepository.AddAsync(gitOperation, cancellationToken);
+            await gitOperationRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch
+        {
+            // Persistence failure should not fail git command execution in MVP.
+        }
+    }
+
+    private static GitOperationType MapGitOperationType(string operationInput)
+    {
+        var normalized = operationInput.Trim().ToLowerInvariant();
+        if (normalized.StartsWith("create-branch:", StringComparison.Ordinal) ||
+            normalized == "current-branch" ||
+            normalized == "branch")
+        {
+            return GitOperationType.Branch;
+        }
+
+        if (normalized.StartsWith("commit-approved:", StringComparison.Ordinal))
+        {
+            return GitOperationType.Commit;
+        }
+
+        if (normalized == "rollback-uncommitted")
+        {
+            return GitOperationType.Rollback;
+        }
+
+        if (normalized == "diff" || normalized == "patch-artifact")
+        {
+            return GitOperationType.Diff;
+        }
+
+        return GitOperationType.Status;
     }
 
     private static async Task<ToolResult> ExecuteRollbackUncommittedAsync(

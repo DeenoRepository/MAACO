@@ -13,7 +13,7 @@ public static class DependencyInjection
         services.AddSingleton<IAgentTool, CodePatchTool>();
         services.AddSingleton<IAgentTool, BuildTool>();
         services.AddSingleton<IAgentTool, TestTool>();
-        services.AddSingleton<IAgentTool, GitTool>();
+        services.AddScoped<IAgentTool, GitTool>();
         services.AddSingleton<IAgentTool, DiffTool>();
         services.AddSingleton<IAgentTool, LogAnalysisTool>();
         services.AddScoped<IToolRegistry, ToolRegistry>();

@@ -491,7 +491,7 @@ tests/
 - [x] Не делать force reset без approval
 - [x] Commit только после approval
 - [x] Rollback только изменений MAACO
-- [ ] Сохранять `GitOperation`
+- [x] Сохранять `GitOperation`
 
 ## Branch naming
 
