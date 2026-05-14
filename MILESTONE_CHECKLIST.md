@@ -536,12 +536,12 @@ tests/
 
 ## Logging/cost
 
-- [ ] Логировать prompt с redaction
-- [ ] Логировать response с redaction
-- [ ] Сохранять `LlmCallLog`
-- [ ] Оценивать input tokens
-- [ ] Оценивать output tokens
-- [ ] Считать estimated cost
+- [x] Логировать prompt с redaction
+- [x] Логировать response с redaction
+- [x] Сохранять `LlmCallLog`
+- [x] Оценивать input tokens
+- [x] Оценивать output tokens
+- [x] Считать estimated cost
 
 ## Routing
 
