@@ -5,16 +5,42 @@
              x:Class="MAACO.App.Views.WorkflowMonitorView">
     <Border Padding="24" CornerRadius="10" Background="#112A2D34">
         <StackPanel Spacing="10">
-            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+                <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}" />
+            </DockPanel>
             <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
-            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" Margin="0,8,0,0">
+            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Workflow Id:" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorkflowId}" TextWrapping="Wrap"/>
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="Status:" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorkflowStatus}"/>
                 <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Count:" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding RetryCount}"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Current Step:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentStep}" TextWrapping="Wrap"/>
             </Grid>
+            <TextBlock Text="{Binding TimelineStatus}" />
+            <Border Padding="8" Background="#0A141E" CornerRadius="8">
+                <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,150,120">
+                        <TextBlock Grid.Column="0" Text="Step" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="2" Text="Duration" FontWeight="SemiBold" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Steps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:WorkflowStepItemViewModel">
+                                <Grid ColumnDefinitions="*,150,120">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Status}" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Duration}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </Border>
 </UserControl>

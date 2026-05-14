@@ -868,11 +868,11 @@ User Task
 
 ## Workflow timeline
 
-- [ ] Показать список steps
-- [ ] Показать текущий step
-- [ ] Показать statuses
-- [ ] Показать duration
-- [ ] Показать retry count
+- [x] Показать список steps
+- [x] Показать текущий step
+- [x] Показать statuses
+- [x] Показать duration
+- [x] Показать retry count
 
 ## Live logs
 
