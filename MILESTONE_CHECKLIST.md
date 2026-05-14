@@ -504,7 +504,7 @@ tests/
 - [x] Diff генерируется
 - [x] Commit создается после approval
 - [x] Reject откатывает изменения
-- [ ] Git operations сохраняются в БД
+- [x] Git operations сохраняются в БД
 
 ---
 
