@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using MAACO.Api.Contracts.Settings;
 using MAACO.Api.Services;
@@ -31,10 +31,11 @@ public sealed class SettingsController(
         if (!validationResult.IsValid)
         {
             validationResult.AddToModelState(ModelState);
-            return ValidationProblem(ModelState);
+            return this.ValidationError();
         }
 
         var settings = await settingsService.UpdateAsync(request, cancellationToken);
         return Ok(settings);
     }
 }
+

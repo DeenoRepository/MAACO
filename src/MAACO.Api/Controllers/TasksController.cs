@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using MAACO.Api.Contracts.Tasks;
 using MAACO.Core.Abstractions.Repositories;
@@ -34,7 +34,7 @@ public sealed class TasksController(
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFound();
+            return this.NotFoundError("Task not found.");
         }
 
         return Ok(Map(task));
@@ -52,13 +52,13 @@ public sealed class TasksController(
         if (!validationResult.IsValid)
         {
             validationResult.AddToModelState(ModelState);
-            return ValidationProblem(ModelState);
+            return this.ValidationError();
         }
 
         var project = await projectRepository.GetByIdAsync(request.ProjectId, cancellationToken);
         if (project is null)
         {
-            return NotFound($"Project {request.ProjectId} not found.");
+            return this.NotFoundError($"Project {request.ProjectId} not found.");
         }
 
         var task = new TaskItem
@@ -83,7 +83,7 @@ public sealed class TasksController(
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFound();
+            return this.NotFoundError("Task not found.");
         }
 
         task.Status = DomainTaskStatus.Cancelled;
@@ -101,7 +101,7 @@ public sealed class TasksController(
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFound();
+            return this.NotFoundError("Task not found.");
         }
 
         return Ok(new TaskDiffResponse(
@@ -118,7 +118,7 @@ public sealed class TasksController(
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFound();
+            return this.NotFoundError("Task not found.");
         }
 
         return Accepted(new TaskActionResponse(
@@ -135,7 +135,7 @@ public sealed class TasksController(
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFound();
+            return this.NotFoundError("Task not found.");
         }
 
         return Accepted(new TaskActionResponse(
@@ -155,3 +155,4 @@ public sealed class TasksController(
             task.UpdatedAt,
             task.Version);
 }
+

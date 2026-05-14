@@ -257,10 +257,10 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Swagger открывается
-- [ ] Все endpoints возвращают корректные DTO
-- [ ] Ошибки возвращаются в едином формате
-- [ ] API работает с SQLite
+- [x] Swagger открывается
+- [x] Все endpoints возвращают корректные DTO
+- [x] Ошибки возвращаются в едином формате
+- [x] API работает с SQLite
 
 ---
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

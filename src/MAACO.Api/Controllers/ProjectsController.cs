@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using MAACO.Api.Contracts.Projects;
 using MAACO.Core.Abstractions.Repositories;
@@ -32,7 +32,7 @@ public sealed class ProjectsController(
         var project = await projectRepository.GetByIdAsync(id, cancellationToken);
         if (project is null)
         {
-            return NotFound();
+            return this.NotFoundError("Project not found.");
         }
 
         return Ok(Map(project));
@@ -49,7 +49,7 @@ public sealed class ProjectsController(
         if (!validationResult.IsValid)
         {
             validationResult.AddToModelState(ModelState);
-            return ValidationProblem(ModelState);
+            return this.ValidationError();
         }
 
         var project = new Project
@@ -72,7 +72,7 @@ public sealed class ProjectsController(
         var project = await projectRepository.GetByIdAsync(id, cancellationToken);
         if (project is null)
         {
-            return NotFound();
+            return this.NotFoundError("Project not found.");
         }
 
         return Accepted(new StartProjectScanResponse(
@@ -90,3 +90,4 @@ public sealed class ProjectsController(
             project.UpdatedAt,
             project.Version);
 }
+

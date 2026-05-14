@@ -1,4 +1,4 @@
-using MAACO.Api.Contracts.Approvals;
+﻿using MAACO.Api.Contracts.Approvals;
 using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using MAACO.Core.Domain.Enums;
@@ -26,7 +26,7 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
         var approval = await approvalRepository.GetByIdAsync(id, cancellationToken);
         if (approval is null)
         {
-            return NotFound();
+            return this.NotFoundError("Approval request not found.");
         }
 
         approval.Status = ApprovalStatus.Approved;
@@ -44,7 +44,7 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
         var approval = await approvalRepository.GetByIdAsync(id, cancellationToken);
         if (approval is null)
         {
-            return NotFound();
+            return this.NotFoundError("Approval request not found.");
         }
 
         approval.Status = ApprovalStatus.Rejected;
@@ -66,3 +66,4 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
             approval.UpdatedAt,
             approval.Version);
 }
+

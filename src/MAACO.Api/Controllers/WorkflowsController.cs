@@ -1,4 +1,4 @@
-using MAACO.Api.Contracts.Workflows;
+﻿using MAACO.Api.Contracts.Workflows;
 using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +20,7 @@ public sealed class WorkflowsController(
         var workflow = await workflowRepository.GetByIdAsync(id, cancellationToken);
         if (workflow is null)
         {
-            return NotFound();
+            return this.NotFoundError("Workflow not found.");
         }
 
         return Ok(Map(workflow));
@@ -34,7 +34,7 @@ public sealed class WorkflowsController(
         var workflow = await workflowRepository.GetByIdAsync(id, cancellationToken);
         if (workflow is null)
         {
-            return NotFound();
+            return this.NotFoundError("Workflow not found.");
         }
 
         var steps = await workflowRepository.ListStepsAsync(id, cancellationToken);
@@ -49,7 +49,7 @@ public sealed class WorkflowsController(
         var workflow = await workflowRepository.GetByIdAsync(id, cancellationToken);
         if (workflow is null)
         {
-            return NotFound();
+            return this.NotFoundError("Workflow not found.");
         }
 
         var logs = await logRepository.ListByWorkflowIdAsync(id, cancellationToken);
@@ -64,7 +64,7 @@ public sealed class WorkflowsController(
         var workflow = await workflowRepository.GetByIdAsync(id, cancellationToken);
         if (workflow is null)
         {
-            return NotFound();
+            return this.NotFoundError("Workflow not found.");
         }
 
         var artifacts = await artifactRepository.ListByTaskIdAsync(workflow.TaskId, cancellationToken);
@@ -115,3 +115,4 @@ public sealed class WorkflowsController(
             artifact.UpdatedAt,
             artifact.Version);
 }
+

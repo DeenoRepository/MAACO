@@ -1,3 +1,4 @@
+using MAACO.Api.Contracts.Common;
 using System.Text.Json;
 
 namespace MAACO.Api.Middleware;
@@ -23,12 +24,11 @@ public sealed class GlobalExceptionMiddleware(RequestDelegate next, ILogger<Glob
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
             context.Response.ContentType = "application/json";
 
-            var payload = new
-            {
-                title = "Internal Server Error",
-                status = StatusCodes.Status500InternalServerError,
-                traceId = context.TraceIdentifier
-            };
+            var payload = new ApiError(
+                "internal_error",
+                "Internal Server Error",
+                null,
+                context.TraceIdentifier);
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
         }

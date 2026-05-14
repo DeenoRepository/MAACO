@@ -7,7 +7,8 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - Completed: `Milestone 0 (Bootstrap)`
 - Completed: `Milestone 1 (Core Domain Model)`
 - Completed: `Milestone 2 (Persistence Layer / SQLite)`
-- In progress: `Milestone 3 (Backend API Skeleton)`
+- Completed: `Milestone 3 (Backend API Skeleton)`
+- In progress: `Milestone 4 (Realtime Event Bus + SignalR)`
 - M2 progress: `DbContext`, `DbSet<>`, mappings, indexes, and repository interfaces/implementations added
 - M2 progress: `InitialCreate` migration added and applied, auto-migrate + seed on API startup enabled
 - M3 progress: API skeleton wired (DI, EF Core, Serilog, OpenTelemetry, Swagger, CORS, global exception middleware)
@@ -19,6 +20,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M3 progress: implemented Approvals endpoints (`GET /api/approvals/pending`, `POST /api/approvals/{id}/approve`, `POST /api/approvals/{id}/reject`)
 - M3 progress: implemented Git/Diff task endpoints (`GET /api/tasks/{id}/diff`, `POST /api/tasks/{id}/commit`, `POST /api/tasks/{id}/rollback`)
 - M3 progress: implemented Settings endpoints (`GET /api/settings`, `PUT /api/settings`)
+- M3 acceptance: Swagger + DTO endpoints + unified error format + SQLite integration completed
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout
