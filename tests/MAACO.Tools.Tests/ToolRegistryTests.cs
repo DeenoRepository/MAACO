@@ -1,4 +1,7 @@
 using MAACO.Core.Abstractions.Tools;
+using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Domain.Entities;
+using MAACO.Core.Domain.Enums;
 using MAACO.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -24,6 +27,32 @@ public sealed class ToolRegistryTests
 
         Assert.True(result.Succeeded);
         Assert.Equal("ok", result.Output);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_PersistsToolExecution_WhenWorkflowIdProvided()
+    {
+        var executionRepository = new InMemoryToolExecutionRepository();
+        var registry = new ToolRegistry(
+            [new SuccessTool()],
+            NullLogger<ToolRegistry>.Instance,
+            executionRepository);
+
+        var workflowId = Guid.NewGuid();
+        var request = new ToolRequest(
+            "SuccessTool",
+            $"{{\"workflowId\":\"{workflowId}\"}}",
+            "D:\\Projects\\MAACO",
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-persist");
+
+        var result = await registry.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Single(executionRepository.Items);
+        var execution = executionRepository.Items[0];
+        Assert.Equal(workflowId, execution.WorkflowId);
+        Assert.Equal(ToolExecutionStatus.Completed, execution.Status);
     }
 
     [Fact]
@@ -169,5 +198,18 @@ public sealed class ToolRegistryTests
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
             return new ToolResult(true, "done", null, TimeSpan.Zero, CorrelationId: request.CorrelationId);
         }
+    }
+
+    private sealed class InMemoryToolExecutionRepository : IToolExecutionRepository
+    {
+        public List<ToolExecution> Items { get; } = [];
+
+        public Task AddAsync(ToolExecution toolExecution, CancellationToken cancellationToken)
+        {
+            Items.Add(toolExecution);
+            return Task.CompletedTask;
+        }
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

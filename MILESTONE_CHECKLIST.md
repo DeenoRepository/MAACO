@@ -409,7 +409,7 @@ tests/
 ### Acceptance Criteria
 
 - [x] Tools вызываются через единый интерфейс
-- [ ] Все tool executions сохраняются
+- [x] Все tool executions сохраняются
 - [x] Tool failures не валят процесс без controlled error
 - [ ] Workspace boundary работает
 
