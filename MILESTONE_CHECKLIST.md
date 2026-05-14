@@ -360,10 +360,10 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Локальный repo добавляется
-- [ ] Project scan сохраняется в БД
-- [ ] Stack определяется корректно
-- [ ] Build/test команды предлагаются автоматически
+- [x] Локальный repo добавляется
+- [x] Project scan сохраняется в БД
+- [x] Stack определяется корректно
+- [x] Build/test команды предлагаются автоматически
 
 ---
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
