@@ -768,15 +768,15 @@ User Task
 - [x] Получить patch
 - [x] Validate patch
 - [x] Apply patch
-- [ ] Повторить build/test
-- [ ] Остановиться при success/max retries
+- [x] Повторить build/test
+- [x] Остановиться при success/max retries
 
 ### Acceptance Criteria
 
-- [ ] Ошибка сборки приводит к debug iteration
-- [ ] Ошибка тестов приводит к debug iteration
-- [ ] Все итерации видны в logs
-- [ ] После success workflow идет к diff review
+- [x] Ошибка сборки приводит к debug iteration
+- [x] Ошибка тестов приводит к debug iteration
+- [x] Все итерации видны в logs
+- [x] После success workflow идет к diff review
 
 ---
 

@@ -711,6 +711,146 @@ public sealed class WorkflowOrchestratorIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenTestsFail_TriggersDebugLoopAndRecovers()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+        Guid taskId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project { Name = "retry-test-project", RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".") };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem { ProjectId = project.Id, Title = "retry-test-task" };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = taskId, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(
+                    Guid.NewGuid(),
+                    taskId,
+                    workflowId,
+                    "retry-test",
+                    "corr-retry-test",
+                    new Dictionary<string, string>
+                    {
+                        ["TestFailAttempts"] = "1",
+                        ["MaxDebugRetries"] = "3"
+                    }),
+                ["BuildStep", "TestStep"],
+                CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
+            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+            Assert.Equal(WorkflowStatus.Completed, workflow.Status);
+            Assert.Equal(1, workflow.RetryCount);
+            Assert.Contains(logs, x => x.Message.Contains("Debug attempt 1/3 for TestStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("TestStep recovered on debug attempt 1", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Post-debug validation replayed: BuildStep, TestStep", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AfterDebugRecovery_ContinuesToDiffStep()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project { Name = "diff-after-recovery-project", RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".") };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem { ProjectId = project.Id, Title = "diff-after-recovery-task" };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = task.Id, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(
+                    Guid.NewGuid(),
+                    task.Id,
+                    workflowId,
+                    "diff-after-recovery",
+                    "corr-diff-after-recovery",
+                    new Dictionary<string, string>
+                    {
+                        ["BuildFailAttempts"] = "1",
+                        ["MaxDebugRetries"] = "3"
+                    }),
+                ["BuildStep", "TestStep", "DiffStep"],
+                CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
+            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).OrderBy(x => x.Order).ToListAsync();
+            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+            Assert.Equal(WorkflowStatus.Completed, workflow.Status);
+            Assert.All(steps, x => Assert.Equal(WorkflowStepStatus.Completed, x.Status));
+            Assert.Contains(logs, x => x.Message.Contains("BuildStep recovered on debug attempt 1", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Executed DiffStep", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
     public async Task ExecuteAsync_DebugAndPatchSteps_ApplyPatchFromPreparedDebugCandidate()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

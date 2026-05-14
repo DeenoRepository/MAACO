@@ -153,10 +153,7 @@ public sealed class WorkflowStepExecutor(
 
             try
             {
-                if (handlers.TryGetValue(failedStep.Name, out var failedStepHandler))
-                {
-                    await failedStepHandler.ExecuteAsync(context, failedStep, cancellationToken);
-                }
+                await ExecutePostPatchValidationAsync(context, failedStep, cancellationToken);
 
                 await logRepository.AddAsync(
                     new LogEvent
@@ -200,6 +197,46 @@ public sealed class WorkflowStepExecutor(
             cancellationToken);
         await logRepository.SaveChangesAsync(cancellationToken);
         return false;
+    }
+
+    private async Task ExecutePostPatchValidationAsync(
+        WorkflowExecutionContext context,
+        WorkflowStep failedStep,
+        CancellationToken cancellationToken)
+    {
+        var replayedHandlers = new List<string>();
+
+        if (handlers.TryGetValue("BuildStep", out var buildHandler))
+        {
+            await buildHandler.ExecuteAsync(context, failedStep, cancellationToken);
+            replayedHandlers.Add("BuildStep");
+        }
+
+        if (handlers.TryGetValue("TestStep", out var testHandler))
+        {
+            await testHandler.ExecuteAsync(context, failedStep, cancellationToken);
+            replayedHandlers.Add("TestStep");
+        }
+
+        // Fallback for minimal pipelines where only a custom failing step exists.
+        if (replayedHandlers.Count == 0 &&
+            handlers.TryGetValue(failedStep.Name, out var failedStepHandler))
+        {
+            await failedStepHandler.ExecuteAsync(context, failedStep, cancellationToken);
+            replayedHandlers.Add(failedStep.Name);
+        }
+
+        await logRepository.AddAsync(
+            new LogEvent
+            {
+                WorkflowId = context.WorkflowId,
+                TaskId = context.TaskId,
+                Severity = LogSeverity.Information,
+                CorrelationId = context.CorrelationId,
+                Message = $"Post-debug validation replayed: {string.Join(", ", replayedHandlers)}."
+            },
+            cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
     }
 
     private async Task IncrementWorkflowRetryCountAsync(Guid workflowId, CancellationToken cancellationToken)
