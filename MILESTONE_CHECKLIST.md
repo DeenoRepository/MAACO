@@ -590,20 +590,20 @@ tests/
 ## Agent constraints
 
 - [ ] Agents не пишут файлы напрямую
-- [ ] Agents используют tools
+- [x] Agents используют tools
 - [x] Agents получают scoped context
-- [ ] Agents логируют решения
+- [x] Agents логируют решения
 - [x] Agents возвращают structured output
 - [x] Agents поддерживают cancellation
 
 ## Prompts
 
-- [ ] Создать system prompt для Planner
-- [ ] Создать system prompt для Developer
-- [ ] Создать system prompt для Test Writer
-- [ ] Создать system prompt для Debugging
-- [ ] Создать system prompt для Documentation
-- [ ] Добавить response schema expectations
+- [x] Создать system prompt для Planner
+- [x] Создать system prompt для Developer
+- [x] Создать system prompt для Test Writer
+- [x] Создать system prompt для Debugging
+- [x] Создать system prompt для Documentation
+- [x] Добавить response schema expectations
 
 ### Acceptance Criteria
 

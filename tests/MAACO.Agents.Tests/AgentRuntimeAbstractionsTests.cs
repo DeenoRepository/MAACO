@@ -1,5 +1,7 @@
 using MAACO.Agents.Abstractions;
 using MAACO.Agents.Agents;
+using MAACO.Agents.Prompts;
+using MAACO.Core.Abstractions.Tools;
 using MAACO.Agents.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -102,6 +104,33 @@ public sealed class AgentRuntimeAbstractionsTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Metadata);
         Assert.Equal("TaskPlannerAgent", result.Metadata!["agent"]);
+        Assert.True(result.Metadata.ContainsKey("systemPrompt"));
+        Assert.True(result.Metadata.ContainsKey("responseSchema"));
+        Assert.True(result.Metadata.ContainsKey("decision"));
+    }
+
+    [Fact]
+    public async Task AgentStub_ExecutesDelegatedTool_WhenRequested()
+    {
+        var tool = new FakeTool("DemoTool");
+        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog());
+        var context = new AgentContext(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "plan",
+            new Dictionary<string, string>
+            {
+                ["toolName"] = "DemoTool",
+                ["toolInput"] = "ping",
+                ["workspacePath"] = "D:/Projects/MAACO"
+            });
+
+        var result = await agent.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, tool.CallCount);
+        Assert.Equal("executed", result.Metadata!["delegatedTool"]);
     }
 
     private sealed class FakeAgent(string name) : IAgent
@@ -118,6 +147,24 @@ public sealed class AgentRuntimeAbstractionsTests
                 Output: "ok",
                 Error: null,
                 Metadata: new Dictionary<string, string> { ["agent"] = Name }));
+        }
+    }
+
+    private sealed class FakeTool(string name) : IAgentTool
+    {
+        public int CallCount { get; private set; }
+        public string Name { get; } = name;
+        public IReadOnlyCollection<ToolPermission> RequiredPermissions => [ToolPermission.ReadOnly];
+
+        public Task<ToolResult> ExecuteAsync(ToolRequest request, CancellationToken cancellationToken)
+        {
+            CallCount++;
+            return Task.FromResult(new ToolResult(
+                Succeeded: true,
+                Output: "ok",
+                Error: null,
+                Duration: TimeSpan.FromMilliseconds(1),
+                CorrelationId: request.CorrelationId));
         }
     }
 }
