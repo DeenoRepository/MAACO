@@ -47,13 +47,26 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         var operation = ParseGitOperation(operationInput);
         if (operation is null)
         {
-            var unsupportedResult = Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, commit-approved:<message>, rollback-uncommitted.", request.CorrelationId, startedAt);
+            var unsupportedResult = Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, create-branch-auto:<title>, commit-approved:<message>, rollback-uncommitted.", request.CorrelationId, startedAt);
             await PersistGitOperationAsync(taskId, operationInput, unsupportedResult, cancellationToken);
             return unsupportedResult;
         }
 
         try
         {
+            if (operation.Name == "create-branch-auto")
+            {
+                var autoBranchResult = await ExecuteCreateBranchAutoAsync(
+                    request,
+                    startedAt,
+                    workingDirectory,
+                    taskId,
+                    operation.AutoBranchTitle,
+                    cancellationToken);
+                await PersistGitOperationAsync(taskId, operation.Name, autoBranchResult, cancellationToken);
+                return autoBranchResult;
+            }
+
             if (operation.Name == "rollback-uncommitted")
             {
                 var rollbackResult = await ExecuteRollbackUncommittedAsync(
@@ -160,6 +173,17 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
             return new GitOperationSpec("create-branch", $"checkout -b {branchName}");
         }
 
+        if (normalized.StartsWith("create-branch-auto:", StringComparison.Ordinal))
+        {
+            var title = raw["create-branch-auto:".Length..].Trim();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                return null;
+            }
+
+            return new GitOperationSpec("create-branch-auto", string.Empty, AutoBranchTitle: title);
+        }
+
         if (normalized.StartsWith("commit-approved:", StringComparison.Ordinal))
         {
             var commitMessage = raw["commit-approved:".Length..].Trim();
@@ -207,6 +231,87 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         return null;
     }
 
+    private static async Task<ToolResult> ExecuteCreateBranchAutoAsync(
+        ToolRequest request,
+        DateTimeOffset startedAt,
+        string workingDirectory,
+        Guid? taskId,
+        string? title,
+        CancellationToken cancellationToken)
+    {
+        if (taskId is null || taskId == Guid.Empty)
+        {
+            return Fail("create-branch-auto requires taskId in input JSON envelope.", request.CorrelationId, startedAt);
+        }
+
+        var shortId = taskId.Value.ToString("N")[..8];
+        var slug = SlugifyBranchSegment(title);
+        var baseName = $"maaco/task-{shortId}-{slug}";
+        var branchName = await ResolveUniqueBranchNameAsync(baseName, workingDirectory, cancellationToken);
+        if (branchName is null)
+        {
+            return Fail("Unable to allocate unique branch name.", request.CorrelationId, startedAt);
+        }
+
+        var (exitCode, stdOut, stdErr) = await RunProcessAsync(
+            "git",
+            $"checkout -b {branchName}",
+            workingDirectory,
+            cancellationToken);
+
+        var output = JsonSerializer.Serialize(new
+        {
+            command = $"git checkout -b {branchName}",
+            operation = "create-branch-auto",
+            generatedBranchName = branchName,
+            exitCode,
+            stdout = Truncate(stdOut, 20000),
+            stderr = Truncate(stdErr, 20000)
+        });
+
+        return new ToolResult(
+            Succeeded: exitCode == 0,
+            Output: output,
+            Error: exitCode == 0 ? null : "Git command failed.",
+            Duration: DateTimeOffset.UtcNow - startedAt,
+            CorrelationId: request.CorrelationId);
+    }
+
+    private static async Task<string?> ResolveUniqueBranchNameAsync(
+        string baseName,
+        string workingDirectory,
+        CancellationToken cancellationToken)
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            var candidate = i == 0 ? baseName : $"{baseName}-{i + 1}";
+            var (exitCode, stdOut, _) = await RunProcessAsync(
+                "git",
+                $"branch --list {candidate}",
+                workingDirectory,
+                cancellationToken);
+            if (exitCode != 0)
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(stdOut))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static string SlugifyBranchSegment(string? value)
+    {
+        var source = string.IsNullOrWhiteSpace(value) ? "task" : value.Trim().ToLowerInvariant();
+        var slug = Regex.Replace(source, "[^a-z0-9]+", "-", RegexOptions.CultureInvariant);
+        slug = slug.Trim('-');
+        return string.IsNullOrWhiteSpace(slug) ? "task" : slug;
+    }
+
     private async Task PersistGitOperationAsync(
         Guid? taskId,
         string operationInput,
@@ -243,6 +348,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
     {
         var normalized = operationInput.Trim().ToLowerInvariant();
         if (normalized.StartsWith("create-branch:", StringComparison.Ordinal) ||
+            normalized.StartsWith("create-branch-auto:", StringComparison.Ordinal) ||
             normalized == "current-branch" ||
             normalized == "branch")
         {
@@ -491,5 +597,6 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
     private sealed record GitOperationSpec(
         string Name,
         string Command,
-        bool GeneratesPatchArtifact = false);
+        bool GeneratesPatchArtifact = false,
+        string? AutoBranchTitle = null);
 }

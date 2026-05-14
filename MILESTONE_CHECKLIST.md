@@ -495,9 +495,9 @@ tests/
 
 ## Branch naming
 
-- [ ] Генерировать branch name `maaco/task-{shortId}-{slug}`
-- [ ] Проверять конфликт имен
-- [ ] Создавать новый branch при необходимости
+- [x] Генерировать branch name `maaco/task-{shortId}-{slug}`
+- [x] Проверять конфликт имен
+- [x] Создавать новый branch при необходимости
 
 ### Acceptance Criteria
 

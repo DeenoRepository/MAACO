@@ -171,6 +171,24 @@ public sealed class GitToolTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsCreateBranchAuto_WhenTaskIdMissing()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "create-branch-auto:Add test endpoint",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-create-branch-auto-missing-task");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("requires taskId", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AcceptsCommitApprovedOperation_ForGitRepository()
     {
         var workspace = CreateWorkspace(isGitRepo: true);
@@ -302,6 +320,19 @@ public sealed class GitToolTests
         Assert.Contains("src/MAACO.New/file.txt", paths);
         Assert.Contains("src/MAACO.Core/Class1.cs", paths);
         Assert.DoesNotContain("old/file.txt", paths);
+    }
+
+    [Theory]
+    [InlineData("Add API endpoint", "add-api-endpoint")]
+    [InlineData("  !!!  ", "task")]
+    [InlineData("Fix MAACO bug #42", "fix-maaco-bug-42")]
+    public void SlugifyBranchSegment_ReturnsExpectedSlug(string input, string expected)
+    {
+        var method = typeof(GitTool).GetMethod("SlugifyBranchSegment", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var actual = (string)method!.Invoke(null, [input])!;
+        Assert.Equal(expected, actual);
     }
 
     [Fact]
