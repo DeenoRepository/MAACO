@@ -59,3 +59,8 @@ public sealed record WorkflowStepDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     long Version);
+
+public sealed record TaskDiffResponse(
+    Guid TaskId,
+    string Diff,
+    string Status);

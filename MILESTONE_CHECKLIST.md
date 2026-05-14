@@ -908,9 +908,9 @@ User Task
 
 ## Diff UI
 
-- [ ] Получить diff по task
-- [ ] Показать changed files
-- [ ] Показать unified diff
+- [x] Получить diff по task
+- [x] Показать changed files
+- [x] Показать unified diff
 - [ ] Подсветить added/removed lines
 - [ ] Показать generated commit message
 - [ ] Позволить изменить commit message

@@ -22,7 +22,7 @@
             <views:WorkflowMonitorView />
         </DataTemplate>
         <DataTemplate DataType="vm:DiffReviewViewModel">
-            <views:ScreenView />
+            <views:DiffReviewView />
         </DataTemplate>
         <DataTemplate DataType="vm:SettingsViewModel">
             <views:ScreenView />

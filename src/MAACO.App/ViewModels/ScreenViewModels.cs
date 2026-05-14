@@ -313,10 +313,81 @@ public sealed record WorkflowLogItemViewModel(
     string Tool,
     string Message);
 
-public sealed class DiffReviewViewModel : BaseViewModel, IScreenViewModel
+public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewModel
 {
+    private readonly ITasksClient tasksClient;
+
     public string Title => "Diff Review";
     public string Description => "Inspect proposed patch and commit message.";
+
+    [ObservableProperty]
+    private string taskId = string.Empty;
+
+    [ObservableProperty]
+    private string diffStatus = "No diff loaded.";
+
+    [ObservableProperty]
+    private string diffText = string.Empty;
+
+    public ObservableCollection<string> ChangedFiles { get; } = [];
+
+    public DiffReviewViewModel(ITasksClient tasksClient)
+    {
+        this.tasksClient = tasksClient;
+    }
+
+    [RelayCommand]
+    public async Task LoadDiffAsync()
+    {
+        ChangedFiles.Clear();
+
+        if (!Guid.TryParse(TaskId, out var parsedTaskId))
+        {
+            DiffStatus = "Enter valid task id.";
+            DiffText = string.Empty;
+            return;
+        }
+
+        var diff = await tasksClient.GetTaskDiffAsync(parsedTaskId, CancellationToken.None);
+        if (diff is null)
+        {
+            DiffStatus = "Failed to load diff.";
+            DiffText = string.Empty;
+            return;
+        }
+
+        DiffStatus = $"Diff status: {diff.Status}";
+        DiffText = diff.Diff;
+
+        foreach (var file in ExtractChangedFiles(diff.Diff))
+        {
+            ChangedFiles.Add(file);
+        }
+
+        if (ChangedFiles.Count == 0)
+        {
+            ChangedFiles.Add("No changed files parsed from diff.");
+        }
+    }
+
+    private static IReadOnlyList<string> ExtractChangedFiles(string diffText)
+    {
+        var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var lines = diffText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            if (line.StartsWith("+++ b/", StringComparison.Ordinal))
+            {
+                files.Add(line["+++ b/".Length..]);
+            }
+            else if (line.StartsWith("--- a/", StringComparison.Ordinal))
+            {
+                files.Add(line["--- a/".Length..]);
+            }
+        }
+
+        return files.OrderBy(x => x).ToList();
+    }
 }
 
 public sealed class SettingsViewModel : BaseViewModel, IScreenViewModel
