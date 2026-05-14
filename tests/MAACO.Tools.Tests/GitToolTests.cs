@@ -2,6 +2,7 @@ using MAACO.Core.Abstractions.Tools;
 using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using MAACO.Tools.Tools;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 
@@ -379,6 +380,50 @@ public sealed class GitToolTests
         Assert.Equal(taskId, repository.Items[0].TaskId);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_CommitApproved_CreatesCommit_InRealRepository()
+    {
+        var workspace = CreateRealGitWorkspace();
+        var tool = new GitTool();
+
+        await File.WriteAllTextAsync(Path.Combine(workspace, "src", "MAACO.Sample.txt"), "changed");
+        RunGit(workspace, "add src/MAACO.Sample.txt");
+
+        var request = new ToolRequest(
+            tool.Name,
+            "commit-approved:Apply approved MAACO changes",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-commit-approved-real");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.True(result.Succeeded, result.Error);
+        var log = RunGit(workspace, "log --oneline -n 1");
+        Assert.Contains("Apply approved MAACO changes", log, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RollbackUncommitted_BlocksNonMaacoChanges_InRealRepository()
+    {
+        var workspace = CreateRealGitWorkspace();
+        var tool = new GitTool();
+
+        await File.WriteAllTextAsync(Path.Combine(workspace, "notes.txt"), "local change");
+
+        var request = new ToolRequest(
+            tool.Name,
+            "rollback-uncommitted",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-rollback-blocked-real");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Rollback blocked", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateWorkspace(bool isGitRepo)
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-gittool-tests", Guid.NewGuid().ToString("N"));
@@ -389,6 +434,50 @@ public sealed class GitToolTests
         }
 
         return path;
+    }
+
+    private static string CreateRealGitWorkspace()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "maaco-gittool-real-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        Directory.CreateDirectory(Path.Combine(path, "src"));
+        File.WriteAllText(Path.Combine(path, "src", "MAACO.Sample.txt"), "initial");
+
+        RunGit(path, "init");
+        RunGit(path, "config user.name \"maaco-tests\"");
+        RunGit(path, "config user.email \"maaco-tests@local\"");
+        RunGit(path, "add .");
+        RunGit(path, "commit -m \"initial commit\"");
+        return path;
+    }
+
+    private static string RunGit(string workingDirectory, string arguments)
+    {
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = arguments,
+                WorkingDirectory = workingDirectory,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        process.Start();
+        var stdout = process.StandardOutput.ReadToEnd();
+        var stderr = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"git {arguments} failed. {stderr}");
+        }
+
+        return stdout;
     }
 
     private sealed class InMemoryGitOperationRepository : IGitOperationRepository
