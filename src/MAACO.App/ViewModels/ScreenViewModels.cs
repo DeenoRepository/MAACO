@@ -340,6 +340,9 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     [ObservableProperty]
     private string approvalStatusMessage = "No approval action yet.";
 
+    [ObservableProperty]
+    private string rejectReason = string.Empty;
+
     public ObservableCollection<string> ChangedFiles { get; } = [];
     public ObservableCollection<DiffLineViewModel> DiffLines { get; } = [];
 
@@ -430,7 +433,7 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
             return;
         }
 
-        var response = await tasksClient.RollbackTaskAsync(parsedTaskId, CancellationToken.None);
+        var response = await tasksClient.RollbackTaskAsync(parsedTaskId, RejectReason, CancellationToken.None);
         if (response is null)
         {
             ApprovalStatusMessage = "Reject request failed.";

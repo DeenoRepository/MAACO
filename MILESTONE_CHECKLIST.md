@@ -919,7 +919,7 @@ User Task
 
 - [x] Approve button
 - [x] Reject button
-- [ ] Reject with reason
+- [x] Reject with reason
 - [ ] Approve вызывает commit
 - [ ] Reject вызывает rollback
 - [ ] Показать результат операции

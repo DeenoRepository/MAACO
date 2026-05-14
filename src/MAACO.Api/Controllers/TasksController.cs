@@ -17,6 +17,7 @@ public sealed class TasksController(
 {
     public sealed record TaskDiffResponse(Guid TaskId, string Diff, string Status);
     public sealed record TaskActionResponse(Guid TaskId, string Status, string Message);
+    public sealed record RejectTaskRequest(string? Reason);
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TaskDto>), StatusCodes.Status200OK)]
@@ -130,7 +131,10 @@ public sealed class TasksController(
     [HttpPost("{id:guid}/rollback")]
     [ProducesResponseType(typeof(TaskActionResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TaskActionResponse>> RollbackTask(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<TaskActionResponse>> RollbackTask(
+        Guid id,
+        [FromBody] RejectTaskRequest? request,
+        CancellationToken cancellationToken)
     {
         var task = await taskRepository.GetByIdAsync(id, cancellationToken);
         if (task is null)
@@ -138,10 +142,14 @@ public sealed class TasksController(
             return this.NotFoundError("Task not found.");
         }
 
+        var reasonSuffix = string.IsNullOrWhiteSpace(request?.Reason)
+            ? string.Empty
+            : $" Reason: {request.Reason.Trim()}";
+
         return Accepted(new TaskActionResponse(
             id,
             "Queued",
-            "Rollback request accepted. Git execution will be implemented in Milestone 8."));
+            $"Rollback request accepted. Git execution will be implemented in Milestone 8.{reasonSuffix}"));
     }
 
     private static TaskDto Map(TaskItem task) =>

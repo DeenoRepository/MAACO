@@ -8,5 +8,5 @@ public interface ITasksClient
     Task<TaskDto?> GetTaskByIdAsync(Guid taskId, CancellationToken cancellationToken);
     Task<TaskDiffResponse?> GetTaskDiffAsync(Guid taskId, CancellationToken cancellationToken);
     Task<TaskActionResponse?> CommitTaskAsync(Guid taskId, CancellationToken cancellationToken);
-    Task<TaskActionResponse?> RollbackTaskAsync(Guid taskId, CancellationToken cancellationToken);
+    Task<TaskActionResponse?> RollbackTaskAsync(Guid taskId, string? reason, CancellationToken cancellationToken);
 }

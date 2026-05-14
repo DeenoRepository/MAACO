@@ -58,9 +58,10 @@ public sealed class TasksClient(HttpClient httpClient) : ITasksClient
         return await response.Content.ReadFromJsonAsync<TaskActionResponse>(cancellationToken: cancellationToken);
     }
 
-    public async Task<TaskActionResponse?> RollbackTaskAsync(Guid taskId, CancellationToken cancellationToken)
+    public async Task<TaskActionResponse?> RollbackTaskAsync(Guid taskId, string? reason, CancellationToken cancellationToken)
     {
-        var response = await httpClient.PostAsync($"api/tasks/{taskId:D}/rollback", content: null, cancellationToken);
+        var payload = new { Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim() };
+        var response = await httpClient.PostAsJsonAsync($"api/tasks/{taskId:D}/rollback", payload, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             return null;
