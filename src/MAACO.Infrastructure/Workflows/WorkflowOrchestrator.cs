@@ -9,6 +9,7 @@ namespace MAACO.Infrastructure.Workflows;
 
 public sealed class WorkflowOrchestrator(
     IWorkflowRepository workflowRepository,
+    ILogRepository logRepository,
     WorkflowStepExecutor stepExecutor,
     IEventBus eventBus) : IWorkflowOrchestrator
 {
@@ -76,6 +77,32 @@ public sealed class WorkflowOrchestrator(
             }
 
             await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            workflow.Status = WorkflowStatus.Failed;
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+
+            await logRepository.AddAsync(
+                new LogEvent
+                {
+                    WorkflowId = workflow.Id,
+                    TaskId = workflow.TaskId,
+                    Severity = LogSeverity.Error,
+                    CorrelationId = context.CorrelationId,
+                    Message = $"Workflow {workflow.Id:D} failed: {ex.Message}"
+                },
+                CancellationToken.None);
+            await logRepository.SaveChangesAsync(CancellationToken.None);
+
+            await eventBus.PublishAsync(
+                new WorkflowFailedEvent(
+                    workflow.Id,
+                    ex.Message,
+                    DateTimeOffset.UtcNow,
+                    context.CorrelationId),
+                CancellationToken.None);
             throw;
         }
 

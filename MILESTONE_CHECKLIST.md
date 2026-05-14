@@ -672,12 +672,12 @@ User Task
 
 ## Retry/debug loop
 
-- [ ] Max debug retries default 3
-- [ ] Build failure triggers DebuggingAgent
-- [ ] Test failure triggers DebuggingAgent
-- [ ] Debug patch applied through CodePatchTool
-- [ ] Stop after max retries
-- [ ] Mark workflow failed with logs
+- [x] Max debug retries default 3
+- [x] Build failure triggers DebuggingAgent
+- [x] Test failure triggers DebuggingAgent
+- [x] Debug patch applied through CodePatchTool
+- [x] Stop after max retries
+- [x] Mark workflow failed with logs
 
 ### Acceptance Criteria
 
