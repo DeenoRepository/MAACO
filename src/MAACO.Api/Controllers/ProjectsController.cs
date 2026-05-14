@@ -22,6 +22,20 @@ public sealed class ProjectsController(
         return Ok(projects.Select(Map).ToList());
     }
 
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ProjectDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProjectDto>> GetProjectById(Guid id, CancellationToken cancellationToken)
+    {
+        var project = await projectRepository.GetByIdAsync(id, cancellationToken);
+        if (project is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(Map(project));
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(ProjectDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

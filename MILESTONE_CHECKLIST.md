@@ -221,7 +221,7 @@ tests/
 
 - [x] `POST /api/projects`
 - [x] `GET /api/projects`
-- [ ] `GET /api/projects/{id}`
+- [x] `GET /api/projects/{id}`
 - [ ] `POST /api/projects/{id}/scan`
 
 ## Endpoints Tasks
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
