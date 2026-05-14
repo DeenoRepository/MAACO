@@ -2,6 +2,13 @@
 
 MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented platform for autonomous SDLC workflows.
 
+## Current Progress
+
+- Completed: `Milestone 0 (Bootstrap)`
+- Completed: `Milestone 1 (Core Domain Model)`
+- In progress: `Milestone 2 (Persistence Layer / SQLite)`
+- Source of milestone truth: `MILESTONE_CHECKLIST.md`
+
 ## Repository Layout
 
 - `src/MAACO.Api` - ASP.NET Core API
