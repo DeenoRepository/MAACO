@@ -570,12 +570,12 @@ tests/
 
 ## Base abstractions
 
-- [ ] Создать `IAgent`
-- [ ] Создать `AgentContext`
-- [ ] Создать `AgentResult`
-- [ ] Создать `AgentCapability`
-- [ ] Создать `AgentRegistry`
-- [ ] Создать `AgentExecutionService`
+- [x] Создать `IAgent`
+- [x] Создать `AgentContext`
+- [x] Создать `AgentResult`
+- [x] Создать `AgentCapability`
+- [x] Создать `AgentRegistry`
+- [x] Создать `AgentExecutionService`
 
 ## Agents
 
