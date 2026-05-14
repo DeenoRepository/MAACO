@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:TaskCreationViewModel"
+             x:Class="MAACO.App.Views.TaskCreationView">
+    <StackPanel Spacing="12">
+        <TextBlock Text="Task Creation" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock Text="Create a task for a selected project and continue to workflow monitoring." Opacity="0.85" />
+
+        <Border Padding="12" Background="#112A2D34" CornerRadius="10">
+            <StackPanel Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Refresh Projects" Command="{Binding LoadProjectsCommand}" />
+                    <ProgressBar Width="120" IsIndeterminate="{Binding IsBusy}" />
+                </StackPanel>
+
+                <TextBlock Text="Project" />
+                <ComboBox ItemsSource="{Binding Projects}"
+                          SelectedItem="{Binding SelectedProject}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Text="Title" />
+                <TextBox Text="{Binding TaskTitle}" PlaceholderText="Implement feature X" />
+
+                <TextBlock Text="Description" />
+                <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+
+                <TextBlock Text="Constraints" />
+                <TextBox Text="{Binding Constraints}" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+
+                <TextBlock Text="Approval Mode" />
+                <ComboBox ItemsSource="{Binding ApprovalModes}" SelectedItem="{Binding SelectedApprovalMode}" />
+
+                <Button Content="Create Task" Command="{Binding CreateTaskCommand}" />
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

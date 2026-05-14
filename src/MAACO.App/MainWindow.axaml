@@ -16,7 +16,7 @@
             <views:ProjectsView />
         </DataTemplate>
         <DataTemplate DataType="vm:TaskCreationViewModel">
-            <views:ScreenView />
+            <views:TaskCreationView />
         </DataTemplate>
         <DataTemplate DataType="vm:WorkflowMonitorViewModel">
             <views:ScreenView />

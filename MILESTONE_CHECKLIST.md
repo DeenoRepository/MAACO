@@ -842,18 +842,18 @@ User Task
 
 ## Task UI
 
-- [ ] Выбрать project
-- [ ] Ввести title
-- [ ] Ввести description
-- [ ] Ввести constraints
-- [ ] Выбрать approval mode
-- [ ] Запустить task
-- [ ] Перейти в workflow monitor
+- [x] Выбрать project
+- [x] Ввести title
+- [x] Ввести description
+- [x] Ввести constraints
+- [x] Выбрать approval mode
+- [x] Запустить task
+- [x] Перейти в workflow monitor
 
 ### Acceptance Criteria
 
 - [x] Пользователь добавляет local repo через UI
-- [ ] Пользователь создает task через UI
+- [x] Пользователь создает task через UI
 - [ ] Workflow стартует
 - [ ] UI показывает начальный статус workflow
 

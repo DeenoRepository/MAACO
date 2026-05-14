@@ -5,6 +5,12 @@ namespace MAACO.App.Services;
 
 public sealed class ProjectsClient(HttpClient httpClient) : IProjectsClient
 {
+    public async Task<IReadOnlyList<ProjectDto>> ListProjectsAsync(CancellationToken cancellationToken)
+    {
+        var projects = await httpClient.GetFromJsonAsync<IReadOnlyList<ProjectDto>>("api/projects", cancellationToken);
+        return projects ?? [];
+    }
+
     public async Task<ProjectDto?> CreateProjectAsync(string name, string repositoryPath, CancellationToken cancellationToken)
     {
         var response = await httpClient.PostAsJsonAsync(

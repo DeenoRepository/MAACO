@@ -25,3 +25,13 @@ public sealed record ProjectScanResponse(
     string BuildCommand,
     string TestCommand,
     bool IsCommandOverrideApplied);
+
+public sealed record TaskDto(
+    Guid Id,
+    Guid ProjectId,
+    string Title,
+    string? Description,
+    string Status,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    long Version);

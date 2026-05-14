@@ -12,6 +12,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IApiClient, ApiClient>();
         services.AddSingleton<IRealtimeClient, RealtimeClient>();
         services.AddSingleton<IProjectsClient, ProjectsClient>();
+        services.AddSingleton<ITasksClient, TasksClient>();
 
         services.AddHttpClient<IApiClient, ApiClient>(client =>
         {
@@ -19,6 +20,11 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(15);
         });
         services.AddHttpClient<IProjectsClient, ProjectsClient>(client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:5168/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddHttpClient<ITasksClient, TasksClient>(client =>
         {
             client.BaseAddress = new Uri("http://localhost:5168/");
             client.Timeout = TimeSpan.FromSeconds(30);

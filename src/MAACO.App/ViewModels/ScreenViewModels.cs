@@ -6,12 +6,6 @@ public sealed class DashboardViewModel : BaseViewModel, IScreenViewModel
     public string Description => "Workflow health and quick actions.";
 }
 
-public sealed class TaskCreationViewModel : BaseViewModel, IScreenViewModel
-{
-    public string Title => "Task Creation";
-    public string Description => "Create autonomous SDLC tasks with constraints.";
-}
-
 public sealed class WorkflowMonitorViewModel : BaseViewModel, IScreenViewModel
 {
     public string Title => "Workflow Monitor";
