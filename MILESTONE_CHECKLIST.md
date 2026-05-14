@@ -246,9 +246,9 @@ tests/
 
 ## Endpoints Git/Diff
 
-- [ ] `GET /api/tasks/{id}/diff`
-- [ ] `POST /api/tasks/{id}/commit`
-- [ ] `POST /api/tasks/{id}/rollback`
+- [x] `GET /api/tasks/{id}/diff`
+- [x] `POST /api/tasks/{id}/commit`
+- [x] `POST /api/tasks/{id}/rollback`
 
 ## Endpoints Settings
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

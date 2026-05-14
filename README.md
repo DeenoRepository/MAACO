@@ -17,6 +17,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M3 progress: implemented Tasks endpoints (`POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/{id}`, `POST /api/tasks/{id}/cancel`)
 - M3 progress: implemented Workflows endpoints (`GET /api/workflows/{id}`, `/steps`, `/logs`, `/artifacts`)
 - M3 progress: implemented Approvals endpoints (`GET /api/approvals/pending`, `POST /api/approvals/{id}/approve`, `POST /api/approvals/{id}/reject`)
+- M3 progress: implemented Git/Diff task endpoints (`GET /api/tasks/{id}/diff`, `POST /api/tasks/{id}/commit`, `POST /api/tasks/{id}/rollback`)
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout

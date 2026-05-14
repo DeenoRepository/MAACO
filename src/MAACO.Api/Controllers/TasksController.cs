@@ -15,6 +15,9 @@ public sealed class TasksController(
     IProjectRepository projectRepository,
     IValidator<CreateTaskRequest> createTaskRequestValidator) : ControllerBase
 {
+    public sealed record TaskDiffResponse(Guid TaskId, string Diff, string Status);
+    public sealed record TaskActionResponse(Guid TaskId, string Status, string Message);
+
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TaskDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TaskDto>>> GetTasks(CancellationToken cancellationToken)
@@ -88,6 +91,57 @@ public sealed class TasksController(
         await taskRepository.SaveChangesAsync(cancellationToken);
 
         return Ok(Map(task));
+    }
+
+    [HttpGet("{id:guid}/diff")]
+    [ProducesResponseType(typeof(TaskDiffResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskDiffResponse>> GetTaskDiff(Guid id, CancellationToken cancellationToken)
+    {
+        var task = await taskRepository.GetByIdAsync(id, cancellationToken);
+        if (task is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new TaskDiffResponse(
+            id,
+            "Diff generation is not connected yet. Git integration is planned in Milestone 8.",
+            "NotAvailable"));
+    }
+
+    [HttpPost("{id:guid}/commit")]
+    [ProducesResponseType(typeof(TaskActionResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskActionResponse>> CommitTask(Guid id, CancellationToken cancellationToken)
+    {
+        var task = await taskRepository.GetByIdAsync(id, cancellationToken);
+        if (task is null)
+        {
+            return NotFound();
+        }
+
+        return Accepted(new TaskActionResponse(
+            id,
+            "Queued",
+            "Commit request accepted. Git execution will be implemented in Milestone 8."));
+    }
+
+    [HttpPost("{id:guid}/rollback")]
+    [ProducesResponseType(typeof(TaskActionResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TaskActionResponse>> RollbackTask(Guid id, CancellationToken cancellationToken)
+    {
+        var task = await taskRepository.GetByIdAsync(id, cancellationToken);
+        if (task is null)
+        {
+            return NotFound();
+        }
+
+        return Accepted(new TaskActionResponse(
+            id,
+            "Queued",
+            "Rollback request accepted. Git execution will be implemented in Milestone 8."));
     }
 
     private static TaskDto Map(TaskItem task) =>
