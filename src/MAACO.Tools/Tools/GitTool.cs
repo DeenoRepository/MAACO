@@ -30,7 +30,7 @@ public sealed class GitTool : IAgentTool
         var command = ParseGitCommand(request.Input);
         if (command is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log.", request.CorrelationId, startedAt);
+            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files.", request.CorrelationId, startedAt);
         }
 
         try
@@ -72,6 +72,8 @@ public sealed class GitTool : IAgentTool
             "current-branch" => "branch --show-current",
             "branch" => "branch --show-current",
             "log" => "log --oneline -n 20",
+            "diff" => "diff -- .",
+            "changed-files" => "status --short --untracked-files=all",
             _ => null
         };
     }

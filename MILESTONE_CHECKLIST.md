@@ -479,8 +479,8 @@ tests/
 - [x] Получать current branch
 - [x] Получать status
 - [ ] Создавать feature branch
-- [ ] Получать diff
-- [ ] Получать changed files
+- [x] Получать diff
+- [x] Получать changed files
 - [ ] Создавать commit
 - [ ] Откатывать uncommitted changes
 - [ ] Генерировать patch artifact
