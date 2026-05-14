@@ -10,6 +10,7 @@ public static class DependencyInjection
     {
         services.AddSingleton<IAgentTool, FileSystemTool>();
         services.AddSingleton<IAgentTool, ProjectScannerTool>();
+        services.AddSingleton<IAgentTool, CodePatchTool>();
         services.AddSingleton<IAgentTool, BuildTool>();
         services.AddSingleton<IAgentTool, TestTool>();
         services.AddSingleton<IAgentTool, GitTool>();

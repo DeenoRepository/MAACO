@@ -390,7 +390,7 @@ tests/
 
 - [x] `FileSystemTool`
 - [x] `ProjectScannerTool`
-- [ ] `CodePatchTool`
+- [x] `CodePatchTool`
 - [x] `BuildTool`
 - [x] `TestTool`
 - [x] `GitTool`
