@@ -99,6 +99,25 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Equal(WorkflowStatus.Completed, workflow.Status);
             Assert.Equal(14, steps.Count);
             Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
+            var orderedNames = steps.OrderBy(x => x.Order).Select(x => x.Name).ToList();
+            Assert.Equal(
+                [
+                    "ProjectScanStep",
+                    "PlanningStep",
+                    "CodeGenerationStep",
+                    "PatchApplicationStep",
+                    "TestGenerationStep",
+                    "BuildStep",
+                    "TestStep",
+                    "DebugStep",
+                    "DiffStep",
+                    "ApprovalStep",
+                    "CommitStep",
+                    "RollbackStep",
+                    "DocumentationStep",
+                    "FinalReportStep"
+                ],
+                orderedNames);
             Assert.Equal(14, artifacts.Count);
             Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
             Assert.Contains(logs, x => x.Message.Contains("Executed ProjectScanStep", StringComparison.Ordinal));
@@ -115,6 +134,77 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Contains(logs, x => x.Message.Contains("Executed RollbackStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed DocumentationStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed FinalReportStep", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenWorkflowMissing_CreatesWorkflowFromTask()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+
+        Guid taskId;
+        Guid unknownWorkflowId = Guid.NewGuid();
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "create-from-task-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+
+            var task = new TaskItem
+            {
+                ProjectId = project.Id,
+                Title = "create-workflow-from-task"
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(
+                    project.Id,
+                    taskId,
+                    unknownWorkflowId,
+                    "task-created",
+                    "corr-create-from-task"),
+                ["ProjectScanStep", "PlanningStep"],
+                CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflows = await db.Workflows.Where(x => x.TaskId == taskId).ToListAsync();
+            Assert.Single(workflows);
+            Assert.Equal(WorkflowStatus.Completed, workflows[0].Status);
+
+            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflows[0].Id).OrderBy(x => x.Order).ToListAsync();
+            Assert.Equal(2, steps.Count);
+            Assert.Equal("ProjectScanStep", steps[0].Name);
+            Assert.Equal("PlanningStep", steps[1].Name);
+            Assert.All(steps, x => Assert.Equal(WorkflowStepStatus.Completed, x.Status));
         }
     }
 

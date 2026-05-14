@@ -681,8 +681,8 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Workflow создается из task
-- [ ] Steps выполняются последовательно
+- [x] Workflow создается из task
+- [x] Steps выполняются последовательно
 - [ ] State сохраняется после каждого step
 - [ ] Failure не теряет контекст
 - [ ] Debug loop работает
