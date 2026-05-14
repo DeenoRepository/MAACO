@@ -424,10 +424,10 @@ tests/
 
 ## Sandbox abstractions
 
-- [ ] Создать `ISandboxExecutor`
-- [ ] Создать `SandboxRequest`
-- [ ] Создать `SandboxResult`
-- [ ] Создать `SandboxOptions`
+- [x] Создать `ISandboxExecutor`
+- [x] Создать `SandboxRequest`
+- [x] Создать `SandboxResult`
+- [x] Создать `SandboxOptions`
 
 ## Local sandbox
 
