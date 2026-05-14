@@ -7,6 +7,8 @@ public sealed class ToolRegistry(
     IEnumerable<IAgentTool> tools,
     ILogger<ToolRegistry> logger) : IToolRegistry
 {
+    private const int MaxLoggedTextLength = 4000;
+
     private readonly Dictionary<string, IAgentTool> toolMap = tools.ToDictionary(
         x => x.Name,
         x => x,
@@ -44,19 +46,25 @@ public sealed class ToolRegistry(
             timeoutCts?.Token ?? CancellationToken.None);
 
         var startedAt = DateTimeOffset.UtcNow;
+        var safeInput = PrepareForLog(request.Input);
         logger.LogInformation(
-            "Tool execution started: {ToolName}, CorrelationId={CorrelationId}",
+            "Tool execution started: {ToolName}, CorrelationId={CorrelationId}, Input={Input}",
             request.ToolName,
-            request.CorrelationId);
+            request.CorrelationId,
+            safeInput);
 
         try
         {
             var result = await tool.ExecuteAsync(request, linkedCts.Token);
+            var safeOutput = PrepareForLog(result.Output);
+            var safeError = PrepareForLog(result.Error);
             logger.LogInformation(
-                "Tool execution completed: {ToolName}, Success={Succeeded}, CorrelationId={CorrelationId}",
+                "Tool execution completed: {ToolName}, Success={Succeeded}, CorrelationId={CorrelationId}, Output={Output}, Error={Error}",
                 request.ToolName,
                 result.Succeeded,
-                request.CorrelationId);
+                request.CorrelationId,
+                safeOutput,
+                safeError);
             return result with
             {
                 Duration = result.Duration == TimeSpan.Zero ? DateTimeOffset.UtcNow - startedAt : result.Duration
@@ -116,5 +124,16 @@ public sealed class ToolRegistry(
 
         var grantedSet = granted.ToHashSet();
         return required.All(grantedSet.Contains);
+    }
+
+    private static string PrepareForLog(string? value)
+    {
+        var redacted = ToolLogRedactor.Redact(value);
+        if (redacted.Length <= MaxLoggedTextLength)
+        {
+            return redacted;
+        }
+
+        return redacted[..MaxLoggedTextLength];
     }
 }

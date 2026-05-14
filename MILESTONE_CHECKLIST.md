@@ -401,8 +401,8 @@ tests/
 
 - [x] Проверка permissions
 - [x] Проверка workspace boundary
-- [ ] Логирование input/output
-- [ ] Redaction secrets
+- [x] Логирование input/output
+- [x] Redaction secrets
 - [x] Max output length
 - [x] Error normalization
 
