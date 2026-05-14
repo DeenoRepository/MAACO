@@ -82,4 +82,66 @@ public sealed class MemoryServiceIntegrationTests
             Assert.Contains(records, x => x.Key == $"AgentNote:{taskId:D}" && x.Type == MemoryRecordType.Observation);
         }
     }
+
+    [Fact]
+    public async Task ListMethods_ReturnProjectAndTaskScopedMemory()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        Guid projectId;
+        Guid taskId;
+        Guid otherTaskId;
+
+        await using (var seedScope = provider.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "memory-project-retrieval",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+
+            var taskA = new TaskItem { ProjectId = projectId, Title = "task-a" };
+            var taskB = new TaskItem { ProjectId = projectId, Title = "task-b" };
+            await db.TaskItems.AddRangeAsync(taskA, taskB);
+            await db.SaveChangesAsync();
+            taskId = taskA.Id;
+            otherTaskId = taskB.Id;
+        }
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var memoryService = runScope.ServiceProvider.GetRequiredService<IMemoryService>();
+
+            await memoryService.SaveProjectSummaryAsync(projectId, "project summary", CancellationToken.None);
+            await memoryService.SaveDecisionAsync(projectId, "decision summary", CancellationToken.None);
+            await memoryService.SaveTaskSummaryAsync(taskId, "task a summary", CancellationToken.None);
+            await memoryService.SaveBuildFailureAsync(taskId, "task a build failure", CancellationToken.None);
+            await memoryService.SaveAgentNoteAsync(otherTaskId, "task b note", CancellationToken.None);
+
+            var byProject = await memoryService.ListByProjectIdAsync(projectId, CancellationToken.None);
+            var byTaskA = await memoryService.ListByTaskIdAsync(taskId, CancellationToken.None);
+
+            Assert.Equal(5, byProject.Count);
+            Assert.Equal(2, byTaskA.Count);
+            Assert.All(byTaskA, x => Assert.Contains(taskId.ToString("D"), x.Key, StringComparison.OrdinalIgnoreCase));
+        }
+    }
 }

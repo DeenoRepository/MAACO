@@ -39,6 +39,17 @@ public sealed class MemoryService(
     public Task<IReadOnlyList<MemoryRecord>> ListByProjectIdAsync(Guid projectId, CancellationToken cancellationToken) =>
         memoryRepository.ListByProjectIdAsync(projectId, cancellationToken);
 
+    public async Task<IReadOnlyList<MemoryRecord>> ListByTaskIdAsync(Guid taskId, CancellationToken cancellationToken)
+    {
+        var taskItem = await GetTaskOrThrowAsync(taskId, cancellationToken);
+        var projectRecords = await memoryRepository.ListByProjectIdAsync(taskItem.ProjectId, cancellationToken);
+        var taskToken = taskId.ToString("D");
+
+        return projectRecords
+            .Where(x => x.Key.Contains(taskToken, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
     private async Task SaveAsync(
         Guid projectId,
         MemoryRecordType type,

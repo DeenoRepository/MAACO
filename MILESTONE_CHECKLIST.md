@@ -709,8 +709,8 @@ User Task
 
 ## Retrieval
 
-- [ ] Получать memory по project id
-- [ ] Получать memory по task id
+- [x] Получать memory по project id
+- [x] Получать memory по task id
 - [ ] Keyword search
 - [ ] Limit top N records
 - [ ] Exclude stale records by status

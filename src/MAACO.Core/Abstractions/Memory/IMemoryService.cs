@@ -11,4 +11,5 @@ public interface IMemoryService
     Task SaveDecisionAsync(Guid projectId, string decision, CancellationToken cancellationToken);
     Task SaveAgentNoteAsync(Guid taskId, string note, CancellationToken cancellationToken);
     Task<IReadOnlyList<MemoryRecord>> ListByProjectIdAsync(Guid projectId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<MemoryRecord>> ListByTaskIdAsync(Guid taskId, CancellationToken cancellationToken);
 }
