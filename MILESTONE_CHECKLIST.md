@@ -452,9 +452,9 @@ tests/
 
 ## Docker abstraction
 
-- [ ] Создать Docker sandbox interface
-- [ ] Добавить базовый stub
-- [ ] Подготовить Docker.DotNet integration point
+- [x] Создать Docker sandbox interface
+- [x] Добавить базовый stub
+- [x] Подготовить Docker.DotNet integration point
 
 ### Acceptance Criteria
 

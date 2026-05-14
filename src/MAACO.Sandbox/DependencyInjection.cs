@@ -8,6 +8,7 @@ public static class DependencyInjection
     public static IServiceCollection AddMaacoSandbox(this IServiceCollection services)
     {
         services.AddScoped<ISandboxExecutor, LocalSandboxExecutor>();
+        services.AddScoped<IDockerSandboxExecutor, DockerSandboxExecutorStub>();
         return services;
     }
 }
