@@ -1,5 +1,6 @@
 using MAACO.Core.Abstractions.Sandbox;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace MAACO.Sandbox;
 
@@ -46,6 +47,10 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
         "C:\\Program Files (x86)",
         "C:\\ProgramData"
     ];
+
+    private static readonly Regex SensitiveAssignmentRegex = new(
+        @"\b(api[_-]?key|token|access[_-]?token|password|secret)\b\s*=\s*([^\s]+)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public async Task<SandboxResult> ExecuteAsync(SandboxRequest request, CancellationToken cancellationToken)
     {
@@ -155,11 +160,13 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
 
             var stdout = await stdoutTask;
             var stderr = await stderrTask;
+            var redactedStdOut = RedactEnvValues(stdout, request.Options.EnvironmentVariables);
+            var redactedStdErr = RedactEnvValues(stderr, request.Options.EnvironmentVariables);
             return new SandboxResult(
                 Succeeded: process.ExitCode == 0,
                 ExitCode: process.ExitCode,
-                StdOut: stdout,
-                StdErr: stderr,
+                StdOut: redactedStdOut,
+                StdErr: redactedStdErr,
                 Duration: DateTimeOffset.UtcNow - startedAt);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -299,5 +306,34 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
 
         return BlockedSystemPathPrefixes.Any(prefix =>
             normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string RedactEnvValues(
+        string text,
+        IReadOnlyDictionary<string, string>? environmentVariables)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var result = SensitiveAssignmentRegex.Replace(text, m => $"{m.Groups[1].Value}=***REDACTED***");
+
+        if (environmentVariables is null || environmentVariables.Count == 0)
+        {
+            return result;
+        }
+
+        foreach (var value in environmentVariables.Values)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            result = result.Replace(value, "***REDACTED***", StringComparison.Ordinal);
+        }
+
+        return result;
     }
 }

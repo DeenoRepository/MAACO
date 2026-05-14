@@ -448,7 +448,7 @@ tests/
 - [x] Запрет `.ssh`
 - [x] Запрет `.aws`
 - [x] Запрет системных путей
-- [ ] Redaction `.env` значений
+- [x] Redaction `.env` значений
 
 ## Docker abstraction
 

@@ -169,6 +169,29 @@ public sealed class LocalSandboxExecutorTests
         Assert.Contains("blocked by sandbox policy", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_RedactsEnvValuesInOutput()
+    {
+        var workspace = CreateWorkspace();
+        var executor = new LocalSandboxExecutor();
+        var request = new SandboxRequest(
+            FileName: CmdExe,
+            Arguments: "/c \"echo API_KEY=top-secret-value & echo TOKEN=%MY_TOKEN%\"",
+            WorkspacePath: workspace,
+            Options: new SandboxOptions(
+                TimeSpan.FromSeconds(10),
+                EnvironmentVariables: new Dictionary<string, string>
+                {
+                    ["MY_TOKEN"] = "another-secret-value"
+                }));
+
+        var result = await executor.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.DoesNotContain("top-secret-value", result.StdOut, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("another-secret-value", result.StdOut, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("***REDACTED***", result.StdOut, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateWorkspace()
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-sandbox-tests", Guid.NewGuid().ToString("N"));
