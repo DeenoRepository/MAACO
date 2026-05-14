@@ -252,8 +252,8 @@ tests/
 
 ## Endpoints Settings
 
-- [ ] `GET /api/settings`
-- [ ] `PUT /api/settings`
+- [x] `GET /api/settings`
+- [x] `PUT /api/settings`
 
 ### Acceptance Criteria
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

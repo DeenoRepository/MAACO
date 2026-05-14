@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using MAACO.Api.Services;
+using FluentValidation;
 using MAACO.Api.Middleware;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
@@ -18,6 +19,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddSingleton<ISettingsService, InMemorySettingsService>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
