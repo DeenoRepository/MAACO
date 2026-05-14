@@ -554,8 +554,8 @@ tests/
 ### Acceptance Criteria
 
 - [x] Fake provider работает без API key
-- [ ] OpenAI-compatible provider вызывается через config
-- [ ] Ollama provider вызывается через config
+- [x] OpenAI-compatible provider вызывается через config
+- [x] Ollama provider вызывается через config
 - [x] Все LLM calls сохраняются
 - [x] Secrets не попадают в logs
 
