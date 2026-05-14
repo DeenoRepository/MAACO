@@ -1,6 +1,9 @@
-﻿using MAACO.Api.Services;
+﻿using MAACO.Api.Realtime;
+using MAACO.Api.Services;
 using FluentValidation;
 using MAACO.Api.Middleware;
+using MAACO.Core.Abstractions.Events;
+using MAACO.Core.Domain.Events;
 using MAACO.Infrastructure;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
@@ -24,6 +27,7 @@ builder.Services.AddSingleton<ISettingsService, InMemorySettingsService>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DesktopUi", policy =>
@@ -49,6 +53,18 @@ var connectionString = builder.Configuration.GetConnectionString("Maaco") ?? "Da
 builder.Services.AddMaacoPersistence(connectionString);
 builder.Services.AddMaacoInfrastructure();
 
+builder.Services.AddSingleton<IEventHandler<TaskCreatedEvent>, TaskCreatedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowStartedEvent>, WorkflowStartedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowStepStartedEvent>, StepStartedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowStepCompletedEvent>, StepCompletedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowStepFailedEvent>, StepFailedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<LogReceivedEvent>, LogReceivedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<ToolExecutionStartedEvent>, ToolExecutionStartedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<ToolExecutionCompletedEvent>, ToolExecutionCompletedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<ApprovalRequestedEvent>, ApprovalRequestedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowCompletedEvent>, WorkflowCompletedSignalrHandler>();
+builder.Services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedSignalrHandler>();
+
 var app = builder.Build();
 app.Services.UseMaacoInfrastructure();
 
@@ -68,4 +84,5 @@ app.UseHttpsRedirection();
 app.UseCors("DesktopUi");
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<WorkflowHub>("/workflowHub");
 app.Run();

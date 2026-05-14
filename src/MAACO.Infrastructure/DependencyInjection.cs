@@ -25,43 +25,23 @@ public static class DependencyInjection
     public static void UseMaacoInfrastructure(this IServiceProvider serviceProvider)
     {
         var eventBus = serviceProvider.GetRequiredService<IEventBus>();
+        SubscribeAll<TaskCreatedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowStartedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowStepStartedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowStepCompletedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowStepFailedEvent>(serviceProvider, eventBus);
+        SubscribeAll<LogReceivedEvent>(serviceProvider, eventBus);
+        SubscribeAll<ToolExecutionStartedEvent>(serviceProvider, eventBus);
+        SubscribeAll<ToolExecutionCompletedEvent>(serviceProvider, eventBus);
+        SubscribeAll<ApprovalRequestedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowCompletedEvent>(serviceProvider, eventBus);
+        SubscribeAll<WorkflowFailedEvent>(serviceProvider, eventBus);
+    }
 
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<TaskCreatedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowStartedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowStepStartedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowStepCompletedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowStepFailedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<ApprovalRequestedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowCompletedEvent>>())
-        {
-            eventBus.Subscribe(handler);
-        }
-
-        foreach (var handler in serviceProvider.GetServices<IEventHandler<WorkflowFailedEvent>>())
+    private static void SubscribeAll<TEvent>(IServiceProvider serviceProvider, IEventBus eventBus)
+        where TEvent : class
+    {
+        foreach (var handler in serviceProvider.GetServices<IEventHandler<TEvent>>())
         {
             eventBus.Subscribe(handler);
         }

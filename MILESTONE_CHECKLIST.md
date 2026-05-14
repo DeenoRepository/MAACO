@@ -282,20 +282,20 @@ tests/
 
 ## SignalR
 
-- [ ] Создать `WorkflowHub`
-- [ ] Добавить подключение `/workflowHub`
-- [ ] Реализовать group per workflow
-- [ ] Реализовать group per project
-- [ ] Публиковать `WorkflowStarted`
-- [ ] Публиковать `StepStarted`
-- [ ] Публиковать `StepCompleted`
-- [ ] Публиковать `StepFailed`
-- [ ] Публиковать `LogReceived`
-- [ ] Публиковать `ToolExecutionStarted`
-- [ ] Публиковать `ToolExecutionCompleted`
-- [ ] Публиковать `ApprovalRequested`
-- [ ] Публиковать `WorkflowCompleted`
-- [ ] Публиковать `WorkflowFailed`
+- [x] Создать `WorkflowHub`
+- [x] Добавить подключение `/workflowHub`
+- [x] Реализовать group per workflow
+- [x] Реализовать group per project
+- [x] Публиковать `WorkflowStarted`
+- [x] Публиковать `StepStarted`
+- [x] Публиковать `StepCompleted`
+- [x] Публиковать `StepFailed`
+- [x] Публиковать `LogReceived`
+- [x] Публиковать `ToolExecutionStarted`
+- [x] Публиковать `ToolExecutionCompleted`
+- [x] Публиковать `ApprovalRequested`
+- [x] Публиковать `WorkflowCompleted`
+- [x] Публиковать `WorkflowFailed`
 
 ### Acceptance Criteria
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

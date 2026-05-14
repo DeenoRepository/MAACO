@@ -53,3 +53,23 @@ public sealed record WorkflowFailedEvent(
     string Reason,
     DateTimeOffset OccurredAt,
     string? CorrelationId = null) : IDomainEvent;
+
+public sealed record LogReceivedEvent(
+    Guid WorkflowId,
+    string Severity,
+    string Message,
+    DateTimeOffset OccurredAt,
+    string? CorrelationId = null) : IDomainEvent;
+
+public sealed record ToolExecutionStartedEvent(
+    Guid WorkflowId,
+    string ToolName,
+    DateTimeOffset OccurredAt,
+    string? CorrelationId = null) : IDomainEvent;
+
+public sealed record ToolExecutionCompletedEvent(
+    Guid WorkflowId,
+    string ToolName,
+    bool Succeeded,
+    DateTimeOffset OccurredAt,
+    string? CorrelationId = null) : IDomainEvent;
