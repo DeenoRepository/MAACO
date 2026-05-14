@@ -233,10 +233,10 @@ tests/
 
 ## Endpoints Workflows
 
-- [ ] `GET /api/workflows/{id}`
-- [ ] `GET /api/workflows/{id}/steps`
-- [ ] `GET /api/workflows/{id}/logs`
-- [ ] `GET /api/workflows/{id}/artifacts`
+- [x] `GET /api/workflows/{id}`
+- [x] `GET /api/workflows/{id}/steps`
+- [x] `GET /api/workflows/{id}/logs`
+- [x] `GET /api/workflows/{id}/artifacts`
 
 ## Endpoints Approvals
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
