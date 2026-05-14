@@ -943,10 +943,10 @@ User Task
 
 ## Backend settings
 
-- [ ] Хранить настройки в appsettings + DB override
-- [ ] Endpoint `GET /api/settings`
-- [ ] Endpoint `PUT /api/settings`
-- [ ] Validate settings
+- [x] Хранить настройки в appsettings + DB override
+- [x] Endpoint `GET /api/settings`
+- [x] Endpoint `PUT /api/settings`
+- [x] Validate settings
 
 ## UI settings
 
