@@ -517,13 +517,13 @@ tests/
 
 ## Abstractions
 
-- [ ] Создать `ILlmProvider`
-- [ ] Создать `ILlmGateway`
-- [ ] Создать `LlmRequest`
-- [ ] Создать `LlmResponse`
-- [ ] Создать `LlmMessage`
-- [ ] Создать `LlmProviderOptions`
-- [ ] Создать `ModelRoutingPolicy`
+- [x] Создать `ILlmProvider`
+- [x] Создать `ILlmGateway`
+- [x] Создать `LlmRequest`
+- [x] Создать `LlmResponse`
+- [x] Создать `LlmMessage`
+- [x] Создать `LlmProviderOptions`
+- [x] Создать `ModelRoutingPolicy`
 
 ## Providers
 
