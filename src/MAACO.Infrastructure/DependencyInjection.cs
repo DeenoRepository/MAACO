@@ -4,6 +4,7 @@ using MAACO.Infrastructure.Events;
 using MAACO.Infrastructure.Events.Handlers;
 using MAACO.Infrastructure.Llm;
 using MAACO.Infrastructure.Workflows;
+using MAACO.Infrastructure.Workflows.Steps;
 using Microsoft.Extensions.DependencyInjection;
 using MAACO.Core.Domain.Events;
 using MAACO.Core.Abstractions.Workflows;
@@ -38,6 +39,9 @@ public static class DependencyInjection
             FallbackModel: "fake-default"));
         services.AddSingleton<ILlmProvider, FakeLlmProvider>();
         services.AddSingleton<ILlmGateway, LlmGateway>();
+        services.AddScoped<IWorkflowStepHandler, ProjectScanStepHandler>();
+        services.AddScoped<IWorkflowStepHandler, GitBranchStepHandler>();
+        services.AddScoped<IWorkflowStepHandler, PlanningStepHandler>();
         services.AddScoped<WorkflowStepExecutor>();
         services.AddScoped<IWorkflowOrchestrator, WorkflowOrchestrator>();
         return services;

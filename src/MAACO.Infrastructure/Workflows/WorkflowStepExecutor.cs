@@ -10,8 +10,12 @@ namespace MAACO.Infrastructure.Workflows;
 public sealed class WorkflowStepExecutor(
     IWorkflowRepository workflowRepository,
     IArtifactRepository artifactRepository,
+    IEnumerable<IWorkflowStepHandler> stepHandlers,
     IEventBus eventBus)
 {
+    private readonly IReadOnlyDictionary<string, IWorkflowStepHandler> handlers =
+        stepHandlers.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
+
     public async Task ExecuteAsync(
         WorkflowExecutionContext context,
         IReadOnlyList<WorkflowStep> steps,
@@ -31,6 +35,11 @@ public sealed class WorkflowStepExecutor(
                     DateTimeOffset.UtcNow,
                     context.CorrelationId),
                 cancellationToken);
+
+            if (handlers.TryGetValue(step.Name, out var handler))
+            {
+                await handler.ExecuteAsync(context, step, cancellationToken);
+            }
 
             step.Status = WorkflowStepStatus.Completed;
             await workflowRepository.SaveChangesAsync(cancellationToken);

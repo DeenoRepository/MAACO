@@ -654,9 +654,9 @@ User Task
 
 ## Step execution
 
-- [ ] ProjectScanStep
-- [ ] GitBranchStep
-- [ ] PlanningStep
+- [x] ProjectScanStep
+- [x] GitBranchStep
+- [x] PlanningStep
 - [ ] CodeGenerationStep
 - [ ] PatchApplicationStep
 - [ ] TestGenerationStep

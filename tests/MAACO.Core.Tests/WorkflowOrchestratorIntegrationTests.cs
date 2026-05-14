@@ -94,12 +94,15 @@ public sealed class WorkflowOrchestratorIntegrationTests
             var artifacts = (await db.Artifacts.Where(x => x.TaskId == taskId).ToListAsync())
                 .OrderBy(x => x.CreatedAt)
                 .ToList();
+            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
 
             Assert.Equal(WorkflowStatus.Completed, workflow.Status);
             Assert.Equal(2, steps.Count);
             Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
             Assert.Equal(2, artifacts.Count);
             Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
+            Assert.Contains(logs, x => x.Message.Contains("Executed ProjectScanStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Executed PlanningStep", StringComparison.Ordinal));
         }
     }
 
