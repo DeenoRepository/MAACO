@@ -12,4 +12,9 @@ public interface IMemoryService
     Task SaveAgentNoteAsync(Guid taskId, string note, CancellationToken cancellationToken);
     Task<IReadOnlyList<MemoryRecord>> ListByProjectIdAsync(Guid projectId, CancellationToken cancellationToken);
     Task<IReadOnlyList<MemoryRecord>> ListByTaskIdAsync(Guid taskId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<MemoryRecord>> SearchByProjectIdAsync(
+        Guid projectId,
+        string keyword,
+        int topN,
+        CancellationToken cancellationToken);
 }

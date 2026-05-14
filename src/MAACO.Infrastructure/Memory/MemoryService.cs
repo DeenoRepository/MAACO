@@ -50,6 +50,29 @@ public sealed class MemoryService(
             .ToList();
     }
 
+    public async Task<IReadOnlyList<MemoryRecord>> SearchByProjectIdAsync(
+        Guid projectId,
+        string keyword,
+        int topN,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(keyword);
+        if (topN <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(topN), "topN must be greater than zero.");
+        }
+
+        var normalizedKeyword = keyword.Trim();
+        var projectRecords = await memoryRepository.ListByProjectIdAsync(projectId, cancellationToken);
+
+        return projectRecords
+            .Where(x =>
+                x.Key.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase) ||
+                x.Value.Contains(normalizedKeyword, StringComparison.OrdinalIgnoreCase))
+            .Take(topN)
+            .ToList();
+    }
+
     private async Task SaveAsync(
         Guid projectId,
         MemoryRecordType type,

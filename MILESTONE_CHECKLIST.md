@@ -711,8 +711,8 @@ User Task
 
 - [x] Получать memory по project id
 - [x] Получать memory по task id
-- [ ] Keyword search
-- [ ] Limit top N records
+- [x] Keyword search
+- [x] Limit top N records
 - [ ] Exclude stale records by status
 - [ ] Context assembly для agents
 
