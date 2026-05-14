@@ -885,10 +885,10 @@ User Task
 
 ## Agent activity
 
-- [ ] Показывать активного agent
-- [ ] Показывать tool executions
-- [ ] Показывать LLM call status
-- [ ] Показывать token estimate
+- [x] Показывать активного agent
+- [x] Показывать tool executions
+- [x] Показывать LLM call status
+- [x] Показывать token estimate
 
 ### Acceptance Criteria
 

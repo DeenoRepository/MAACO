@@ -52,6 +52,18 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
 
     public IReadOnlyList<string> SeverityOptions { get; } = ["All", "Information", "Warning", "Error"];
 
+    [ObservableProperty]
+    private string activeAgent = "n/a";
+
+    [ObservableProperty]
+    private string activeTool = "n/a";
+
+    [ObservableProperty]
+    private string llmCallStatus = "unknown";
+
+    [ObservableProperty]
+    private string tokenEstimate = "0";
+
     partial void OnSeverityFilterChanged(string value) => ApplyLogFilters();
     partial void OnAgentFilterChanged(string value) => ApplyLogFilters();
     partial void OnToolFilterChanged(string value) => ApplyLogFilters();
@@ -152,6 +164,7 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
         }
 
         ApplyLogFilters();
+        UpdateAgentActivity(realtimeEvent);
     }
 
     private void ApplyLogFilters()
@@ -167,6 +180,36 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
         {
             FilteredLogs.Add(log);
         }
+    }
+
+    private void UpdateAgentActivity(RealtimeEvent realtimeEvent)
+    {
+        if (!string.IsNullOrWhiteSpace(realtimeEvent.Agent) && realtimeEvent.Agent != "-")
+        {
+            ActiveAgent = realtimeEvent.Agent;
+        }
+
+        if (!string.IsNullOrWhiteSpace(realtimeEvent.Tool) && realtimeEvent.Tool != "-")
+        {
+            ActiveTool = realtimeEvent.Tool;
+        }
+
+        if (string.Equals(realtimeEvent.EventType, "ToolExecutionStarted", StringComparison.OrdinalIgnoreCase))
+        {
+            LlmCallStatus = "Tool running";
+        }
+        else if (string.Equals(realtimeEvent.EventType, "ToolExecutionCompleted", StringComparison.OrdinalIgnoreCase))
+        {
+            LlmCallStatus = "Tool completed";
+        }
+        else if (realtimeEvent.Message.Contains("Provider=", StringComparison.OrdinalIgnoreCase) ||
+                 realtimeEvent.Message.Contains("Model=", StringComparison.OrdinalIgnoreCase))
+        {
+            LlmCallStatus = "LLM activity detected";
+        }
+
+        var estimate = Math.Max(1, realtimeEvent.Message.Length / 4);
+        TokenEstimate = estimate.ToString();
     }
 }
 

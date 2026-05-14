@@ -72,6 +72,20 @@
                     </ListBox>
                 </Grid>
             </Border>
+
+            <TextBlock Text="Agent Activity" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" />
+            <Border Padding="8" Background="#0A141E" CornerRadius="8">
+                <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Active agent:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ActiveAgent}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Tool execution:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ActiveTool}" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="LLM call status:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LlmCallStatus}" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Token estimate:" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TokenEstimate}" />
+                </Grid>
+            </Border>
         </StackPanel>
     </Border>
 </UserControl>
