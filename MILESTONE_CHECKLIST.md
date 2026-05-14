@@ -273,8 +273,8 @@ tests/
 
 ## Internal event bus
 
-- [ ] Создать `IEventBus`
-- [ ] Реализовать in-memory event bus
+- [x] Создать `IEventBus`
+- [x] Реализовать in-memory event bus
 - [ ] Добавить event handlers
 - [ ] Добавить persistence важных событий в `LogEvent`
 - [ ] Добавить correlation id
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

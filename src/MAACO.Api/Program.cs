@@ -1,6 +1,7 @@
 ﻿using MAACO.Api.Services;
 using FluentValidation;
 using MAACO.Api.Middleware;
+using MAACO.Infrastructure;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
@@ -46,6 +47,7 @@ builder.Services
 
 var connectionString = builder.Configuration.GetConnectionString("Maaco") ?? "Data Source=maaco.db";
 builder.Services.AddMaacoPersistence(connectionString);
+builder.Services.AddMaacoInfrastructure();
 
 var app = builder.Build();
 
