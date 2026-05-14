@@ -31,11 +31,39 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
         "reboot"
     ];
 
+    private static readonly string[] BlockedPathFragments =
+    [
+        "\\.ssh",
+        "/.ssh",
+        "\\.aws",
+        "/.aws"
+    ];
+
+    private static readonly string[] BlockedSystemPathPrefixes =
+    [
+        "C:\\Windows",
+        "C:\\Program Files",
+        "C:\\Program Files (x86)",
+        "C:\\ProgramData"
+    ];
+
     public async Task<SandboxResult> ExecuteAsync(SandboxRequest request, CancellationToken cancellationToken)
     {
         var startedAt = DateTimeOffset.UtcNow;
         try
         {
+            var workspacePath = Path.GetFullPath(request.WorkspacePath);
+            if (IsBlockedPath(workspacePath))
+            {
+                return new SandboxResult(
+                    Succeeded: false,
+                    ExitCode: -1,
+                    StdOut: string.Empty,
+                    StdErr: string.Empty,
+                    Duration: DateTimeOffset.UtcNow - startedAt,
+                    Error: "Workspace path is blocked by sandbox policy.");
+            }
+
             if (!IsAllowedCommand(request.FileName))
             {
                 return new SandboxResult(
@@ -58,8 +86,18 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
                     Error: "Command contains blocked dangerous pattern.");
             }
 
-            var workspacePath = Path.GetFullPath(request.WorkspacePath);
             var workingDirectory = ResolveWorkingDirectory(workspacePath, request.Options.WorkingDirectory);
+            if (IsBlockedPath(workingDirectory))
+            {
+                return new SandboxResult(
+                    Succeeded: false,
+                    ExitCode: -1,
+                    StdOut: string.Empty,
+                    StdErr: string.Empty,
+                    Duration: DateTimeOffset.UtcNow - startedAt,
+                    Error: "Working directory path is blocked by sandbox policy.");
+            }
+
             if (!IsWithinWorkspace(workspacePath, workingDirectory))
             {
                 return new SandboxResult(
@@ -91,6 +129,17 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
                     CreateNoWindow = true
                 }
             };
+
+            if (ContainsBlockedEnvironmentPath(request.Options.EnvironmentVariables))
+            {
+                return new SandboxResult(
+                    Succeeded: false,
+                    ExitCode: -1,
+                    StdOut: string.Empty,
+                    StdErr: string.Empty,
+                    Duration: DateTimeOffset.UtcNow - startedAt,
+                    Error: "Environment variable contains blocked path.");
+            }
 
             ApplyEnvironmentVariables(process.StartInfo, request.Options.EnvironmentVariables);
             process.Start();
@@ -213,5 +262,42 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
 
         return DangerousArgumentTokens.Any(token =>
             arguments.Contains(token, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool ContainsBlockedEnvironmentPath(IReadOnlyDictionary<string, string>? environmentVariables)
+    {
+        if (environmentVariables is null || environmentVariables.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var value in environmentVariables.Values)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+
+            if (IsBlockedPath(value))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsBlockedPath(string path)
+    {
+        var normalized = path.Replace('/', '\\');
+
+        if (BlockedPathFragments.Any(fragment =>
+                normalized.Contains(fragment.Replace('/', '\\'), StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        return BlockedSystemPathPrefixes.Any(prefix =>
+            normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 }

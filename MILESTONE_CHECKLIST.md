@@ -444,10 +444,10 @@ tests/
 
 - [x] Command allowlist для MVP
 - [x] Blocklist опасных команд
-- [ ] Запрет доступа вне workspace
-- [ ] Запрет `.ssh`
-- [ ] Запрет `.aws`
-- [ ] Запрет системных путей
+- [x] Запрет доступа вне workspace
+- [x] Запрет `.ssh`
+- [x] Запрет `.aws`
+- [x] Запрет системных путей
 - [ ] Redaction `.env` значений
 
 ## Docker abstraction

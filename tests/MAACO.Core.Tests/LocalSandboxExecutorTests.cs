@@ -114,6 +114,61 @@ public sealed class LocalSandboxExecutorTests
         Assert.Contains("blocked dangerous pattern", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_RejectsBlockedSshPath()
+    {
+        var executor = new LocalSandboxExecutor();
+        var request = new SandboxRequest(
+            FileName: CmdExe,
+            Arguments: "/c \"echo test\"",
+            WorkspacePath: "C:\\Users\\tester\\.ssh\\repo",
+            Options: new SandboxOptions(TimeSpan.FromSeconds(10)));
+
+        var result = await executor.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("blocked by sandbox policy", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsBlockedAwsPathInEnvironment()
+    {
+        var workspace = CreateWorkspace();
+        var executor = new LocalSandboxExecutor();
+        var request = new SandboxRequest(
+            FileName: CmdExe,
+            Arguments: "/c \"echo test\"",
+            WorkspacePath: workspace,
+            Options: new SandboxOptions(
+                TimeSpan.FromSeconds(10),
+                EnvironmentVariables: new Dictionary<string, string>
+                {
+                    ["AWS_SHARED_CREDENTIALS_FILE"] = "C:\\Users\\tester\\.aws\\credentials"
+                }));
+
+        var result = await executor.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Environment variable contains blocked path", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsBlockedSystemWorkingDirectory()
+    {
+        var workspace = CreateWorkspace();
+        var executor = new LocalSandboxExecutor();
+        var request = new SandboxRequest(
+            FileName: CmdExe,
+            Arguments: "/c \"echo hello\"",
+            WorkspacePath: workspace,
+            Options: new SandboxOptions(TimeSpan.FromSeconds(10), WorkingDirectory: "C:\\Windows\\System32"));
+
+        var result = await executor.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("blocked by sandbox policy", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static string CreateWorkspace()
     {
         var path = Path.Combine(Path.GetTempPath(), "maaco-sandbox-tests", Guid.NewGuid().ToString("N"));
