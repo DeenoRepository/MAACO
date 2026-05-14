@@ -194,8 +194,8 @@ tests/
 
 - [x] SQLite база создается автоматически
 - [x] Initial migration применяется
-- [ ] Данные сохраняются и читаются
-- [ ] Unit/integration tests проходят
+- [x] Данные сохраняются и читаются
+- [x] Unit/integration tests проходят
 
 ---
 
@@ -208,14 +208,14 @@ tests/
 
 ## API setup
 
-- [ ] Настроить ASP.NET Core Web API
-- [ ] Подключить DI
-- [ ] Подключить EF Core
-- [ ] Подключить Serilog
-- [ ] Подключить OpenTelemetry
-- [ ] Подключить Swagger
-- [ ] Настроить CORS для desktop UI
-- [ ] Добавить global exception middleware
+- [x] Настроить ASP.NET Core Web API
+- [x] Подключить DI
+- [x] Подключить EF Core
+- [x] Подключить Serilog
+- [x] Подключить OpenTelemetry
+- [x] Подключить Swagger
+- [x] Настроить CORS для desktop UI
+- [x] Добавить global exception middleware
 
 ## Endpoints Projects
 
@@ -1257,5 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
