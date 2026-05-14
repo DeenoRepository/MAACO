@@ -300,8 +300,8 @@ tests/
 ### Acceptance Criteria
 
 - [ ] UI/тестовый клиент получает realtime события
-- [ ] События сохраняются в логах
-- [ ] События имеют correlation id
+- [x] События сохраняются в логах
+- [x] События имеют correlation id
 - [x] Workflow status обновляется корректно
 
 ---
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
