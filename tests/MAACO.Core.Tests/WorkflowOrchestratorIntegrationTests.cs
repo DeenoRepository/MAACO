@@ -1,7 +1,9 @@
 using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Abstractions.Events;
 using MAACO.Core.Abstractions.Workflows;
 using MAACO.Core.Domain.Entities;
 using MAACO.Core.Domain.Enums;
+using MAACO.Core.Domain.Events;
 using MAACO.Infrastructure;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
@@ -40,6 +42,24 @@ public sealed class WorkflowOrchestratorIntegrationTests
 
         await using (var runScope = provider.CreateAsyncScope())
         {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "test-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem
+            {
+                ProjectId = project.Id,
+                Title = "task",
+                Status = MAACO.Core.Domain.Enums.TaskStatus.Created
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
             var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
             var workflow = new Workflow
             {
@@ -68,14 +88,187 @@ public sealed class WorkflowOrchestratorIntegrationTests
         {
             var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
             var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
-            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).OrderBy(x => x.Order).ToListAsync();
-            var artifacts = await db.Artifacts.Where(x => x.TaskId == taskId).OrderBy(x => x.CreatedAt).ToListAsync();
+            var steps = (await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).ToListAsync())
+                .OrderBy(x => x.Order)
+                .ToList();
+            var artifacts = (await db.Artifacts.Where(x => x.TaskId == taskId).ToListAsync())
+                .OrderBy(x => x.CreatedAt)
+                .ToList();
 
             Assert.Equal(WorkflowStatus.Completed, workflow.Status);
             Assert.Equal(2, steps.Count);
             Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
             Assert.Equal(2, artifacts.Count);
             Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
+        }
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_PublishesRealtimeStepEvents()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var collector = new StepEventCollector();
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddSingleton(collector);
+        services.AddSingleton<IEventHandler<WorkflowStepStartedEvent>>(sp => sp.GetRequiredService<StepEventCollector>());
+        services.AddSingleton<IEventHandler<WorkflowStepCompletedEvent>>(sp => sp.GetRequiredService<StepEventCollector>());
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "test-project-rt",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem
+            {
+                ProjectId = project.Id,
+                Title = "task-rt",
+                Status = MAACO.Core.Domain.Enums.TaskStatus.Created
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = task.Id, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(Guid.NewGuid(), workflow.TaskId, workflow.Id, "events-test", "corr-rt"),
+                ["Scan", "Plan"],
+                CancellationToken.None);
+        }
+
+        Assert.Equal(2, collector.StartedCount);
+        Assert.Equal(2, collector.CompletedCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenCancelled_PersistsCancelledWorkflowAndSteps()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        using var cts = new CancellationTokenSource();
+        var cancelHandler = new CancelOnFirstStepStartedHandler(cts);
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddSingleton<IEventHandler<WorkflowStepStartedEvent>>(cancelHandler);
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "test-project-cancel",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem
+            {
+                ProjectId = project.Id,
+                Title = "task-cancel",
+                Status = MAACO.Core.Domain.Enums.TaskStatus.Created
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = task.Id, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                orchestrator.ExecuteAsync(
+                    new WorkflowExecutionContext(Guid.NewGuid(), workflow.TaskId, workflow.Id, "cancel-test", "corr-cancel"),
+                    ["Scan", "Plan", "Build"],
+                    cts.Token));
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
+            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+            Assert.Equal(WorkflowStatus.Cancelled, workflow.Status);
+            Assert.NotEmpty(steps);
+            Assert.Contains(steps, step => step.Status == WorkflowStepStatus.Cancelled);
+            Assert.Contains(steps, step => step.Status == WorkflowStepStatus.Completed);
+        }
+    }
+
+    private sealed class StepEventCollector :
+        IEventHandler<WorkflowStepStartedEvent>,
+        IEventHandler<WorkflowStepCompletedEvent>
+    {
+        public int StartedCount { get; private set; }
+        public int CompletedCount { get; private set; }
+
+        public Task HandleAsync(WorkflowStepStartedEvent @event, CancellationToken cancellationToken)
+        {
+            StartedCount++;
+            return Task.CompletedTask;
+        }
+
+        public Task HandleAsync(WorkflowStepCompletedEvent @event, CancellationToken cancellationToken)
+        {
+            CompletedCount++;
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class CancelOnFirstStepStartedHandler(CancellationTokenSource cancellationTokenSource) : IEventHandler<WorkflowStepStartedEvent>
+    {
+        private bool cancelled;
+
+        public Task HandleAsync(WorkflowStepStartedEvent @event, CancellationToken cancellationToken)
+        {
+            if (!cancelled)
+            {
+                cancelled = true;
+                cancellationTokenSource.Cancel();
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

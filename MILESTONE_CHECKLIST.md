@@ -649,8 +649,8 @@ User Task
 - [x] Создать checkpoint после каждого step
 - [x] Сохранять status workflow
 - [x] Сохранять status step
-- [ ] Публиковать realtime events
-- [ ] Поддержать cancellation
+- [x] Публиковать realtime events
+- [x] Поддержать cancellation
 
 ## Step execution
 

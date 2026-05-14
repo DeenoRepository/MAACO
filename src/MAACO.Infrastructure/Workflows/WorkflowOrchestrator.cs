@@ -61,7 +61,23 @@ public sealed class WorkflowOrchestrator(
         }
 
         await workflowRepository.SaveChangesAsync(cancellationToken);
-        await stepExecutor.ExecuteAsync(context, steps, cancellationToken);
+        try
+        {
+            await stepExecutor.ExecuteAsync(context, steps, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            workflow.Status = WorkflowStatus.Cancelled;
+
+            var persistedSteps = await workflowRepository.ListStepsAsync(workflow.Id, CancellationToken.None);
+            foreach (var step in persistedSteps.Where(x => x.Status is WorkflowStepStatus.Pending or WorkflowStepStatus.Running))
+            {
+                step.Status = WorkflowStepStatus.Cancelled;
+            }
+
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
 
         workflow.Status = WorkflowStatus.Completed;
         await workflowRepository.SaveChangesAsync(cancellationToken);
