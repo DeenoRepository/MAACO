@@ -80,7 +80,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
                     WorkflowId: workflowId,
                     Trigger: "integration-test",
                     CorrelationId: "corr-m11"),
-                ["ProjectScanStep", "PlanningStep"],
+                ["ProjectScanStep", "PlanningStep", "CodeGenerationStep", "PatchApplicationStep", "TestGenerationStep"],
                 CancellationToken.None);
         }
 
@@ -97,12 +97,15 @@ public sealed class WorkflowOrchestratorIntegrationTests
             var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
 
             Assert.Equal(WorkflowStatus.Completed, workflow.Status);
-            Assert.Equal(2, steps.Count);
+            Assert.Equal(5, steps.Count);
             Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
-            Assert.Equal(2, artifacts.Count);
+            Assert.Equal(5, artifacts.Count);
             Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
             Assert.Contains(logs, x => x.Message.Contains("Executed ProjectScanStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed PlanningStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Executed CodeGenerationStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Executed PatchApplicationStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Executed TestGenerationStep", StringComparison.Ordinal));
         }
     }
 
