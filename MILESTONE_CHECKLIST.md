@@ -344,11 +344,11 @@ tests/
 
 ## Build/test command detection
 
-- [ ] Для `.NET`: `dotnet build`
-- [ ] Для `.NET`: `dotnet test`
-- [ ] Для Node.js: `npm test` или script из `package.json`
-- [ ] Для Python: `pytest`
-- [ ] Позволить override команд в settings
+- [x] Для `.NET`: `dotnet build`
+- [x] Для `.NET`: `dotnet test`
+- [x] Для Node.js: `npm test` или script из `package.json`
+- [x] Для Python: `pytest`
+- [x] Позволить override команд в settings
 
 ## Context snapshot
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

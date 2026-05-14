@@ -16,7 +16,8 @@ public sealed class ProjectsController(
     IValidator<CreateProjectRequest> createProjectRequestValidator,
     IProjectPathValidator projectPathValidator,
     IProjectScanner projectScanner,
-    IProjectStackDetector projectStackDetector) : ControllerBase
+    IProjectStackDetector projectStackDetector,
+    IProjectBuildTestCommandDetector buildTestCommandDetector) : ControllerBase
 {
     public sealed record StartProjectScanResponse(
         Guid ProjectId,
@@ -31,7 +32,10 @@ public sealed class ProjectsController(
         bool HasPython,
         IReadOnlyList<string> SolutionFiles,
         IReadOnlyList<string> ProjectFiles,
-        IReadOnlyList<string> PackageManifests);
+        IReadOnlyList<string> PackageManifests,
+        string BuildCommand,
+        string TestCommand,
+        bool IsCommandOverrideApplied);
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ProjectDto>), StatusCodes.Status200OK)]
@@ -104,6 +108,10 @@ public sealed class ProjectsController(
             project.RepositoryPath.Value,
             scanResult.Files,
             cancellationToken);
+        var commandResult = await buildTestCommandDetector.DetectAsync(
+            stackResult,
+            stackResult.PackageManifests,
+            cancellationToken);
 
         return Accepted(new StartProjectScanResponse(
             id,
@@ -118,7 +126,10 @@ public sealed class ProjectsController(
             stackResult.HasPython,
             stackResult.SolutionFiles,
             stackResult.ProjectFiles,
-            stackResult.PackageManifests));
+            stackResult.PackageManifests,
+            commandResult.BuildCommand,
+            commandResult.TestCommand,
+            commandResult.IsOverrideApplied));
     }
 
     private static ProjectDto Map(Project project) =>

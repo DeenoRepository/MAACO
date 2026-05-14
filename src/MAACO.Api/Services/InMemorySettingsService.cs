@@ -8,7 +8,9 @@ public sealed class InMemorySettingsService : ISettingsService
         LlmProvider: "OpenAI-Compatible",
         LlmModel: "gpt-5",
         RequireApproval: true,
-        MaxParallelAgents: 4);
+        MaxParallelAgents: 4,
+        BuildCommandOverride: null,
+        TestCommandOverride: null);
 
     public Task<SettingsDto> GetAsync(CancellationToken cancellationToken) =>
         Task.FromResult(settings);
@@ -19,7 +21,9 @@ public sealed class InMemorySettingsService : ISettingsService
             request.LlmProvider.Trim(),
             request.LlmModel.Trim(),
             request.RequireApproval,
-            request.MaxParallelAgents);
+            request.MaxParallelAgents,
+            string.IsNullOrWhiteSpace(request.BuildCommandOverride) ? null : request.BuildCommandOverride.Trim(),
+            string.IsNullOrWhiteSpace(request.TestCommandOverride) ? null : request.TestCommandOverride.Trim());
 
         return Task.FromResult(settings);
     }

@@ -4,4 +4,6 @@ public sealed record SettingsDto(
     string LlmProvider,
     string LlmModel,
     bool RequireApproval,
-    int MaxParallelAgents);
+    int MaxParallelAgents,
+    string? BuildCommandOverride = null,
+    string? TestCommandOverride = null);

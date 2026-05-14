@@ -13,6 +13,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M5 progress: repository path validation added (exists/readable/.git, restricted dirs block, normalized path)
 - M5 progress: file scanner added with ignore rules and limits (size/count), integrated into `POST /api/projects/{id}/scan`
 - M5 progress: stack detection added (.NET/Node.js/Python/Generic) with solution/project/manifests discovery
+- M5 progress: build/test command detection added (.NET `dotnet build/test`, Node `npm test`, Python `pytest`) + settings override
 - M4 progress: added `IEventBus` and in-memory event bus with DI registration
 - M4 progress: added event handlers with `LogEvent` persistence, `workflowId`, and `correlationId` support
 - M4 progress: added SignalR WorkflowHub (`/workflowHub`), workflow/project groups, and realtime event publishers
