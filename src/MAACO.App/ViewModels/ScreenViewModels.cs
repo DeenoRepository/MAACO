@@ -11,8 +11,11 @@ public sealed class DashboardViewModel : BaseViewModel, IScreenViewModel
     public string Description => "Workflow health and quick actions.";
 }
 
-public sealed partial class WorkflowMonitorViewModel(IWorkflowsClient workflowsClient) : BaseViewModel, IScreenViewModel
+public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenViewModel
 {
+    private readonly IWorkflowsClient workflowsClient;
+    private readonly IRealtimeClient realtimeClient;
+
     public string Title => "Workflow Monitor";
     public string Description => "Track workflow progress, retries, and status.";
 
@@ -32,12 +35,42 @@ public sealed partial class WorkflowMonitorViewModel(IWorkflowsClient workflowsC
     private string timelineStatus = "No workflow selected.";
 
     public ObservableCollection<WorkflowStepItemViewModel> Steps { get; } = [];
+    public ObservableCollection<WorkflowLogItemViewModel> Logs { get; } = [];
+    public ObservableCollection<WorkflowLogItemViewModel> FilteredLogs { get; } = [];
+
+    [ObservableProperty]
+    private string severityFilter = "All";
+
+    [ObservableProperty]
+    private string agentFilter = string.Empty;
+
+    [ObservableProperty]
+    private string toolFilter = string.Empty;
+
+    [ObservableProperty]
+    private WorkflowLogItemViewModel? selectedLog;
+
+    public IReadOnlyList<string> SeverityOptions { get; } = ["All", "Information", "Warning", "Error"];
+
+    partial void OnSeverityFilterChanged(string value) => ApplyLogFilters();
+    partial void OnAgentFilterChanged(string value) => ApplyLogFilters();
+    partial void OnToolFilterChanged(string value) => ApplyLogFilters();
+
+    public WorkflowMonitorViewModel(
+        IWorkflowsClient workflowsClient,
+        IRealtimeClient realtimeClient)
+    {
+        this.workflowsClient = workflowsClient;
+        this.realtimeClient = realtimeClient;
+        realtimeClient.WorkflowEventReceived += OnWorkflowEventReceived;
+    }
 
     public void SetWorkflowSummary(Guid id, string status, int retries)
     {
         WorkflowId = id.ToString("D");
         WorkflowStatus = status;
         RetryCount = retries.ToString();
+        _ = realtimeClient.JoinWorkflowGroupAsync(id, CancellationToken.None);
         _ = RefreshCommand.ExecuteAsync(null);
     }
 
@@ -76,12 +109,78 @@ public sealed partial class WorkflowMonitorViewModel(IWorkflowsClient workflowsC
         CurrentStep = active?.Name ?? steps.OrderByDescending(x => x.Order).FirstOrDefault()?.Name ?? "n/a";
         TimelineStatus = $"Loaded {steps.Count} step(s).";
     }
+
+    [RelayCommand]
+    public void CopySelectedLog()
+    {
+        if (SelectedLog is null)
+        {
+            TimelineStatus = "No log selected.";
+            return;
+        }
+
+        TimelineStatus = $"Copied log line: [{SelectedLog.Severity}] {SelectedLog.Message}";
+    }
+
+    [RelayCommand]
+    public async Task SaveLogsViewAsync()
+    {
+        var logsDir = Path.Combine(Environment.CurrentDirectory, ".maaco", "ui-logs");
+        Directory.CreateDirectory(logsDir);
+        var target = Path.Combine(logsDir, $"workflow-monitor-{DateTimeOffset.UtcNow:yyyyMMddHHmmss}.log");
+        var lines = FilteredLogs.Select(x => $"{x.Timestamp:O} [{x.Severity}] [Tool:{x.Tool}] {x.Message}");
+        await File.WriteAllLinesAsync(target, lines, CancellationToken.None);
+        TimelineStatus = $"Saved logs view: {target}";
+    }
+
+    private void OnWorkflowEventReceived(object? sender, RealtimeEvent realtimeEvent)
+    {
+        if (!Guid.TryParse(WorkflowId, out _))
+        {
+            return;
+        }
+
+        Logs.Insert(0, new WorkflowLogItemViewModel(
+            realtimeEvent.OccurredAt,
+            realtimeEvent.Severity,
+            realtimeEvent.Agent,
+            realtimeEvent.Tool,
+            realtimeEvent.Message));
+        while (Logs.Count > 500)
+        {
+            Logs.RemoveAt(Logs.Count - 1);
+        }
+
+        ApplyLogFilters();
+    }
+
+    private void ApplyLogFilters()
+    {
+        var filtered = Logs.Where(log =>
+            (SeverityFilter == "All" || string.Equals(log.Severity, SeverityFilter, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(AgentFilter) || log.Agent.Contains(AgentFilter, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(ToolFilter) || log.Tool.Contains(ToolFilter, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+
+        FilteredLogs.Clear();
+        foreach (var log in filtered)
+        {
+            FilteredLogs.Add(log);
+        }
+    }
 }
 
 public sealed record WorkflowStepItemViewModel(
     string Name,
     string Status,
     string Duration);
+
+public sealed record WorkflowLogItemViewModel(
+    DateTimeOffset Timestamp,
+    string Severity,
+    string Agent,
+    string Tool,
+    string Message);
 
 public sealed class DiffReviewViewModel : BaseViewModel, IScreenViewModel
 {

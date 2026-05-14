@@ -876,12 +876,12 @@ User Task
 
 ## Live logs
 
-- [ ] Stream logs через SignalR
-- [ ] Фильтр по severity
-- [ ] Фильтр по agent
-- [ ] Фильтр по tool
-- [ ] Copy log line
-- [ ] Save logs view
+- [x] Stream logs через SignalR
+- [x] Фильтр по severity
+- [x] Фильтр по agent
+- [x] Фильтр по tool
+- [x] Copy log line
+- [x] Save logs view
 
 ## Agent activity
 
