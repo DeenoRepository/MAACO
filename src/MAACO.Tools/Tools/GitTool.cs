@@ -22,6 +22,11 @@ public sealed class GitTool : IAgentTool
             return Fail("Workspace boundary validation failed.", request.CorrelationId, startedAt);
         }
 
+        if (!IsGitRepository(workingDirectory))
+        {
+            return Fail("Target path is not a git repository.", request.CorrelationId, startedAt);
+        }
+
         var command = ParseGitCommand(request.Input);
         if (command is null)
         {
@@ -99,6 +104,12 @@ public sealed class GitTool : IAgentTool
 
     private static string Truncate(string value, int max) =>
         value.Length <= max ? value : value[..max];
+
+    private static bool IsGitRepository(string workingDirectory)
+    {
+        var gitPath = Path.Combine(workingDirectory, ".git");
+        return Directory.Exists(gitPath) || File.Exists(gitPath);
+    }
 
     private static ToolResult Fail(string error, string? correlationId, DateTimeOffset startedAt) =>
         new(

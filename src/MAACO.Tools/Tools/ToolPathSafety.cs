@@ -7,6 +7,11 @@ internal static class ToolPathSafety
         var workspaceFull = Path.GetFullPath(workspacePath);
         var targetFull = Path.GetFullPath(targetPath);
 
+        if (string.Equals(workspaceFull, targetFull, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         if (!workspaceFull.EndsWith(Path.DirectorySeparatorChar))
         {
             workspaceFull += Path.DirectorySeparatorChar;
