@@ -168,6 +168,42 @@ public sealed class GitToolTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_AcceptsCommitApprovedOperation_ForGitRepository()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "commit-approved:Apply MAACO changes",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-commit-approved");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.DoesNotContain("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsPlainCommitOperation_WithoutApprovalMarker()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "commit:Apply MAACO changes",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-commit-without-approval");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AcceptsRollbackUncommittedOperation_ForGitRepository()
     {
         var workspace = CreateWorkspace(isGitRepo: true);

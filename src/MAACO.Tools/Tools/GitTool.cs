@@ -35,7 +35,7 @@ public sealed class GitTool : IAgentTool
         var operation = ParseGitOperation(request.Input);
         if (operation is null)
         {
-            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, rollback-uncommitted.", request.CorrelationId, startedAt);
+            return Fail("Unsupported git operation. Allowed: status, current-branch, branch, log, diff, changed-files, patch-artifact, create-branch:<name>, commit-approved:<message>, rollback-uncommitted.", request.CorrelationId, startedAt);
         }
 
         try
@@ -89,6 +89,18 @@ public sealed class GitTool : IAgentTool
             }
 
             return new GitOperationSpec("create-branch", $"checkout -b {branchName}");
+        }
+
+        if (normalized.StartsWith("commit-approved:", StringComparison.Ordinal))
+        {
+            var commitMessage = raw["commit-approved:".Length..].Trim();
+            if (string.IsNullOrWhiteSpace(commitMessage))
+            {
+                return null;
+            }
+
+            var escapedCommitMessage = commitMessage.Replace("\"", "\\\"", StringComparison.Ordinal);
+            return new GitOperationSpec("commit-approved", $"commit -m \"{escapedCommitMessage}\"");
         }
 
         return normalized switch

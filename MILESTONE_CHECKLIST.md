@@ -481,7 +481,7 @@ tests/
 - [x] Создавать feature branch
 - [x] Получать diff
 - [x] Получать changed files
-- [ ] Создавать commit
+- [x] Создавать commit
 - [x] Откатывать uncommitted changes
 - [x] Генерировать patch artifact
 
@@ -489,7 +489,7 @@ tests/
 
 - [ ] Не делать push в MVP
 - [ ] Не делать force reset без approval
-- [ ] Commit только после approval
+- [x] Commit только после approval
 - [ ] Rollback только изменений MAACO
 - [ ] Сохранять `GitOperation`
 
