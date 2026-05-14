@@ -16,6 +16,7 @@ public static class DependencyInjection
             options.UseSqlite(connectionString));
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IProjectContextSnapshotRepository, ProjectContextSnapshotRepository>();
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IWorkflowRepository, WorkflowRepository>();
         services.AddScoped<ILogRepository, LogRepository>();

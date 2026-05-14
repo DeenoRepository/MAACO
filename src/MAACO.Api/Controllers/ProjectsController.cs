@@ -6,6 +6,7 @@ using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using MAACO.Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace MAACO.Api.Controllers;
 
@@ -13,6 +14,7 @@ namespace MAACO.Api.Controllers;
 [Route("api/projects")]
 public sealed class ProjectsController(
     IProjectRepository projectRepository,
+    IProjectContextSnapshotRepository snapshotRepository,
     IValidator<CreateProjectRequest> createProjectRequestValidator,
     IProjectPathValidator projectPathValidator,
     IProjectScanner projectScanner,
@@ -112,6 +114,33 @@ public sealed class ProjectsController(
             stackResult,
             stackResult.PackageManifests,
             cancellationToken);
+        var summary = $"Stack: {stackResult.PrimaryStack}. Files scanned: {scanResult.ScannedFiles}.";
+        var keyFiles = stackResult.SolutionFiles
+            .Concat(stackResult.ProjectFiles)
+            .Concat(stackResult.PackageManifests)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(50)
+            .ToArray();
+
+        var snapshot = new ProjectContextSnapshot
+        {
+            ProjectId = project.Id,
+            BranchName = "unknown",
+            CommitHash = "unknown",
+            Stack = new DetectedProjectStack(
+                stackResult.PrimaryStack,
+                stackResult.PrimaryStack == "Generic" ? "unknown" : "detected"),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                Summary = summary,
+                KeyFiles = keyFiles,
+                BuildCommand = commandResult.BuildCommand,
+                TestCommand = commandResult.TestCommand
+            })
+        };
+
+        await snapshotRepository.AddAsync(snapshot, cancellationToken);
+        await snapshotRepository.SaveChangesAsync(cancellationToken);
 
         return Accepted(new StartProjectScanResponse(
             id,

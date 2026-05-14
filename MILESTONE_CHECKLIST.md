@@ -352,11 +352,11 @@ tests/
 
 ## Context snapshot
 
-- [ ] Создавать `ProjectContextSnapshot`
-- [ ] Сохранять список ключевых файлов
-- [ ] Сохранять detected stack
-- [ ] Сохранять build/test commands
-- [ ] Сохранять project summary
+- [x] Создавать `ProjectContextSnapshot`
+- [x] Сохранять список ключевых файлов
+- [x] Сохранять detected stack
+- [x] Сохранять build/test commands
+- [x] Сохранять project summary
 
 ### Acceptance Criteria
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
