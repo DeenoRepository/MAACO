@@ -14,9 +14,16 @@ namespace MAACO.Api.Controllers;
 public sealed class ProjectsController(
     IProjectRepository projectRepository,
     IValidator<CreateProjectRequest> createProjectRequestValidator,
-    IProjectPathValidator projectPathValidator) : ControllerBase
+    IProjectPathValidator projectPathValidator,
+    IProjectScanner projectScanner) : ControllerBase
 {
-    public sealed record StartProjectScanResponse(Guid ProjectId, string Status, string Message);
+    public sealed record StartProjectScanResponse(
+        Guid ProjectId,
+        string Status,
+        string Message,
+        int ScannedFiles,
+        int SkippedBySize,
+        int SkippedByLimit);
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ProjectDto>), StatusCodes.Status200OK)]
@@ -84,10 +91,15 @@ public sealed class ProjectsController(
             return this.NotFoundError("Project not found.");
         }
 
+        var scanResult = await projectScanner.ScanAsync(project.RepositoryPath.Value, cancellationToken);
+
         return Accepted(new StartProjectScanResponse(
             id,
-            "Queued",
-            "Project scan request accepted. Scanner workflow will be wired in Milestone 5."));
+            "Completed",
+            "Project scan completed.",
+            scanResult.ScannedFiles,
+            scanResult.SkippedBySize,
+            scanResult.SkippedByLimit));
     }
 
     private static ProjectDto Map(Project project) =>

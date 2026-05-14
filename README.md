@@ -11,6 +11,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - Completed: `Milestone 4 (Realtime Event Bus + SignalR)`
 - In progress: `Milestone 5 (Project Scanner)`
 - M5 progress: repository path validation added (exists/readable/.git, restricted dirs block, normalized path)
+- M5 progress: file scanner added with ignore rules and limits (size/count), integrated into `POST /api/projects/{id}/scan`
 - M4 progress: added `IEventBus` and in-memory event bus with DI registration
 - M4 progress: added event handlers with `LogEvent` persistence, `workflowId`, and `correlationId` support
 - M4 progress: added SignalR WorkflowHub (`/workflowHub`), workflow/project groups, and realtime event publishers
