@@ -643,9 +643,9 @@ User Task
 
 ## Workflow engine
 
-- [ ] Создать `IWorkflowOrchestrator`
-- [ ] Создать `WorkflowExecutionContext`
-- [ ] Создать `WorkflowStepExecutor`
+- [x] Создать `IWorkflowOrchestrator`
+- [x] Создать `WorkflowExecutionContext`
+- [x] Создать `WorkflowStepExecutor`
 - [ ] Создать checkpoint после каждого step
 - [ ] Сохранять status workflow
 - [ ] Сохранять status step

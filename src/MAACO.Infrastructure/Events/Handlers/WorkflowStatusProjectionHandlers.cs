@@ -47,6 +47,11 @@ internal static class WorkflowStatusProjectionHelpers
             return;
         }
 
+        if (workflow.Status == status)
+        {
+            return;
+        }
+
         workflow.Status = WorkflowStatusTransitions.EnsureCanTransition(workflow.Status, status);
         workflow.UpdatedAt = DateTimeOffset.UtcNow;
         await workflowRepository.SaveChangesAsync(cancellationToken);
