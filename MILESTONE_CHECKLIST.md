@@ -757,10 +757,10 @@ User Task
 
 ## Log analysis
 
-- [ ] Извлекать compiler errors
-- [ ] Извлекать stack traces
-- [ ] Извлекать failed assertions
-- [ ] Передавать summary DebuggingAgent
+- [x] Извлекать compiler errors
+- [x] Извлекать stack traces
+- [x] Извлекать failed assertions
+- [x] Передавать summary DebuggingAgent
 
 ## Debug cycle
 

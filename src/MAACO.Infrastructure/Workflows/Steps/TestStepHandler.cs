@@ -79,6 +79,7 @@ public sealed class TestStepHandler(
 
         var failedTests = DetectFailedTests(stdOut, stdErr);
         await SaveTestArtifactsAsync(context, stdOut, stdErr, exitCode, failedTests.Count, cancellationToken);
+        await PersistDiagnosticsSummaryAsync(context, stdOut, stdErr, cancellationToken);
 
         await logRepository.AddAsync(
             new LogEvent
@@ -163,6 +164,32 @@ public sealed class TestStepHandler(
             cancellationToken);
 
         await artifactRepository.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task PersistDiagnosticsSummaryAsync(
+        WorkflowExecutionContext context,
+        string stdOut,
+        string stdErr,
+        CancellationToken cancellationToken)
+    {
+        var lines = (stdOut + Environment.NewLine + stdErr)
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var compilerErrors = lines.Where(line => line.Contains(" error ", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.Ordinal).Take(20).ToList();
+        var stackTraces = lines.Where(line => line.StartsWith("at ", StringComparison.Ordinal) || line.Contains("--- End of stack trace", StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.Ordinal).Take(20).ToList();
+        var failedAssertions = lines.Where(line => FailedTestRegex.IsMatch(line)).Distinct(StringComparer.Ordinal).Take(20).ToList();
+
+        await logRepository.AddAsync(
+            new LogEvent
+            {
+                WorkflowId = context.WorkflowId,
+                TaskId = context.TaskId,
+                Severity = LogSeverity.Information,
+                CorrelationId = context.CorrelationId,
+                Message = $"Diagnostics summary: CompilerErrors={compilerErrors.Count}; StackTraces={stackTraces.Count}; FailedAssertions={failedAssertions.Count}."
+            },
+            cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
     }
 
     private static bool TryResolveTestCommand(

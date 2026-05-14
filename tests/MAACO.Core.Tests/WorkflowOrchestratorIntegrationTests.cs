@@ -408,6 +408,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Equal(1, workflow.RetryCount);
             Assert.Contains(logs, x => x.Message.Contains("Debug attempt 1/3 for BuildStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed DebugStep", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("DiagnosticsSummaryIncluded=True", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("Executed PatchApplicationStep", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("BuildStep recovered on debug attempt 1", StringComparison.Ordinal));
         }
@@ -554,6 +555,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Contains(testArtifacts, x => x.Path.EndsWith("/stdout", StringComparison.Ordinal));
             Assert.Contains(testArtifacts, x => x.Path.EndsWith("/stderr", StringComparison.Ordinal));
             Assert.Contains(testArtifacts, x => x.Path.EndsWith("/failed-tests", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("Diagnostics summary:", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("ExitCode=0", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("FailedTests=0", StringComparison.Ordinal));
         }
