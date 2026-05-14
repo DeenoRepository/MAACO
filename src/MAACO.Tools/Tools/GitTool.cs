@@ -32,9 +32,10 @@ public sealed class GitTool : IAgentTool
             return Fail("Target path is not a git repository.", request.CorrelationId, startedAt);
         }
 
-        if (IsForbiddenOperation(request.Input))
+        var forbiddenReason = GetForbiddenOperationReason(request.Input);
+        if (forbiddenReason is not null)
         {
-            return Fail("Git push operations are disabled in MVP.", request.CorrelationId, startedAt);
+            return Fail(forbiddenReason, request.CorrelationId, startedAt);
         }
 
         var operation = ParseGitOperation(request.Input);
@@ -123,12 +124,24 @@ public sealed class GitTool : IAgentTool
         };
     }
 
-    private static bool IsForbiddenOperation(string input)
+    private static string? GetForbiddenOperationReason(string input)
     {
         var normalized = input.Trim().ToLowerInvariant();
-        return normalized == "push"
+        if (normalized == "push"
             || normalized.StartsWith("push ", StringComparison.Ordinal)
-            || normalized.StartsWith("push:", StringComparison.Ordinal);
+            || normalized.StartsWith("push:", StringComparison.Ordinal))
+        {
+            return "Git push operations are disabled in MVP.";
+        }
+
+        if (normalized == "reset --hard"
+            || normalized.StartsWith("reset --hard ", StringComparison.Ordinal)
+            || normalized.StartsWith("reset --hard:", StringComparison.Ordinal))
+        {
+            return "Git force reset (--hard) requires approval and is disabled by default.";
+        }
+
+        return null;
     }
 
     private static async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(

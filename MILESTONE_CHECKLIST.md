@@ -488,7 +488,7 @@ tests/
 ## Safety
 
 - [x] Не делать push в MVP
-- [ ] Не делать force reset без approval
+- [x] Не делать force reset без approval
 - [x] Commit только после approval
 - [ ] Rollback только изменений MAACO
 - [ ] Сохранять `GitOperation`

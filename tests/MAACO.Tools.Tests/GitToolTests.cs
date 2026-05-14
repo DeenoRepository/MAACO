@@ -222,6 +222,42 @@ public sealed class GitToolTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsResetHardOperation_WithoutApproval()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "reset --hard",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-reset-hard-disabled");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("requires approval", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsResetHardWithRevision_WithoutApproval()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "reset --hard HEAD~1",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-reset-hard-rev-disabled");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("requires approval", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AcceptsRollbackUncommittedOperation_ForGitRepository()
     {
         var workspace = CreateWorkspace(isGitRepo: true);
