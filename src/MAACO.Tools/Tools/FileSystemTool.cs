@@ -6,6 +6,10 @@ namespace MAACO.Tools.Tools;
 public sealed class FileSystemTool : IAgentTool
 {
     private const int MaxEntries = 500;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public string Name => "FileSystemTool";
 
@@ -19,7 +23,7 @@ public sealed class FileSystemTool : IAgentTool
         var startedAt = DateTimeOffset.UtcNow;
         try
         {
-            var input = JsonSerializer.Deserialize<FileSystemToolInput>(request.Input);
+            var input = JsonSerializer.Deserialize<FileSystemToolInput>(request.Input, JsonOptions);
             if (input is null || string.IsNullOrWhiteSpace(input.Path))
             {
                 return Task.FromResult(Fail("Invalid input for FileSystemTool.", request.CorrelationId, startedAt));

@@ -411,7 +411,7 @@ tests/
 - [x] Tools вызываются через единый интерфейс
 - [x] Все tool executions сохраняются
 - [x] Tool failures не валят процесс без controlled error
-- [ ] Workspace boundary работает
+- [x] Workspace boundary работает
 
 ---
 
