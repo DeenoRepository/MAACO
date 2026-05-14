@@ -699,13 +699,13 @@ User Task
 
 ## Memory service
 
-- [ ] Создать `IMemoryService`
-- [ ] Сохранять `ProjectSummary`
-- [ ] Сохранять `TaskSummary`
-- [ ] Сохранять `FileSummary`
-- [ ] Сохранять `BuildFailure`
-- [ ] Сохранять `Decision`
-- [ ] Сохранять `AgentNote`
+- [x] Создать `IMemoryService`
+- [x] Сохранять `ProjectSummary`
+- [x] Сохранять `TaskSummary`
+- [x] Сохранять `FileSummary`
+- [x] Сохранять `BuildFailure`
+- [x] Сохранять `Decision`
+- [x] Сохранять `AgentNote`
 
 ## Retrieval
 

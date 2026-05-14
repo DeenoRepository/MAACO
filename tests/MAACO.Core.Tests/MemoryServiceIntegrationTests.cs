@@ -1,0 +1,85 @@
+using MAACO.Core.Abstractions.Memory;
+using MAACO.Core.Domain.Entities;
+using MAACO.Core.Domain.Enums;
+using MAACO.Infrastructure;
+using MAACO.Persistence;
+using MAACO.Persistence.Data;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace MAACO.Core.Tests;
+
+public sealed class MemoryServiceIntegrationTests
+{
+    [Fact]
+    public async Task SaveMethods_PersistAllRequiredMemoryRecords()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        Guid projectId;
+        Guid taskId;
+
+        await using (var seedScope = provider.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "memory-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+
+            var task = new TaskItem
+            {
+                ProjectId = projectId,
+                Title = "memory-task"
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+        }
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var memoryService = runScope.ServiceProvider.GetRequiredService<IMemoryService>();
+
+            await memoryService.SaveProjectSummaryAsync(projectId, "project summary", CancellationToken.None);
+            await memoryService.SaveTaskSummaryAsync(taskId, "task summary", CancellationToken.None);
+            await memoryService.SaveFileSummaryAsync(projectId, "src/file.cs", "file summary", CancellationToken.None);
+            await memoryService.SaveBuildFailureAsync(taskId, "build failure", CancellationToken.None);
+            await memoryService.SaveDecisionAsync(projectId, "decision summary", CancellationToken.None);
+            await memoryService.SaveAgentNoteAsync(taskId, "agent note", CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var records = await db.MemoryRecords.Where(x => x.ProjectId == projectId).ToListAsync();
+
+            Assert.Equal(6, records.Count);
+            Assert.Contains(records, x => x.Key == "ProjectSummary" && x.Type == MemoryRecordType.Summary);
+            Assert.Contains(records, x => x.Key == $"TaskSummary:{taskId:D}" && x.Type == MemoryRecordType.Summary);
+            Assert.Contains(records, x => x.Key == "FileSummary:src/file.cs" && x.Type == MemoryRecordType.Summary);
+            Assert.Contains(records, x => x.Key == $"BuildFailure:{taskId:D}" && x.Type == MemoryRecordType.Observation);
+            Assert.Contains(records, x => x.Key == "Decision" && x.Type == MemoryRecordType.Decision);
+            Assert.Contains(records, x => x.Key == $"AgentNote:{taskId:D}" && x.Type == MemoryRecordType.Observation);
+        }
+    }
+}
