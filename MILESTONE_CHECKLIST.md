@@ -335,12 +335,12 @@ tests/
 
 ## Stack detection
 
-- [ ] Детектировать `.NET`
-- [ ] Детектировать `Node.js`
-- [ ] Детектировать `Python`
-- [ ] Детектировать generic project
-- [ ] Находить solution/project files
-- [ ] Находить package manifests
+- [x] Детектировать `.NET`
+- [x] Детектировать `Node.js`
+- [x] Детектировать `Python`
+- [x] Детектировать generic project
+- [x] Находить solution/project files
+- [x] Находить package manifests
 
 ## Build/test command detection
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 

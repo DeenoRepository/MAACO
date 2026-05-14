@@ -26,6 +26,7 @@ builder.Services.AddControllers();
 builder.Services.AddSingleton<ISettingsService, InMemorySettingsService>();
 builder.Services.AddSingleton<IProjectPathValidator, ProjectPathValidator>();
 builder.Services.AddSingleton<IProjectScanner, ProjectScanner>();
+builder.Services.AddSingleton<IProjectStackDetector, ProjectStackDetector>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

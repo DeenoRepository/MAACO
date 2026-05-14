@@ -15,7 +15,8 @@ public sealed class ProjectsController(
     IProjectRepository projectRepository,
     IValidator<CreateProjectRequest> createProjectRequestValidator,
     IProjectPathValidator projectPathValidator,
-    IProjectScanner projectScanner) : ControllerBase
+    IProjectScanner projectScanner,
+    IProjectStackDetector projectStackDetector) : ControllerBase
 {
     public sealed record StartProjectScanResponse(
         Guid ProjectId,
@@ -23,7 +24,14 @@ public sealed class ProjectsController(
         string Message,
         int ScannedFiles,
         int SkippedBySize,
-        int SkippedByLimit);
+        int SkippedByLimit,
+        string PrimaryStack,
+        bool HasDotNet,
+        bool HasNodeJs,
+        bool HasPython,
+        IReadOnlyList<string> SolutionFiles,
+        IReadOnlyList<string> ProjectFiles,
+        IReadOnlyList<string> PackageManifests);
 
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ProjectDto>), StatusCodes.Status200OK)]
@@ -92,6 +100,10 @@ public sealed class ProjectsController(
         }
 
         var scanResult = await projectScanner.ScanAsync(project.RepositoryPath.Value, cancellationToken);
+        var stackResult = await projectStackDetector.DetectAsync(
+            project.RepositoryPath.Value,
+            scanResult.Files,
+            cancellationToken);
 
         return Accepted(new StartProjectScanResponse(
             id,
@@ -99,7 +111,14 @@ public sealed class ProjectsController(
             "Project scan completed.",
             scanResult.ScannedFiles,
             scanResult.SkippedBySize,
-            scanResult.SkippedByLimit));
+            scanResult.SkippedByLimit,
+            stackResult.PrimaryStack,
+            stackResult.HasDotNet,
+            stackResult.HasNodeJs,
+            stackResult.HasPython,
+            stackResult.SolutionFiles,
+            stackResult.ProjectFiles,
+            stackResult.PackageManifests));
     }
 
     private static ProjectDto Map(Project project) =>
