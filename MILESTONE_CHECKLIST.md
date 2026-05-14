@@ -442,8 +442,8 @@ tests/
 
 ## Command safety
 
-- [ ] Command allowlist для MVP
-- [ ] Blocklist опасных команд
+- [x] Command allowlist для MVP
+- [x] Blocklist опасных команд
 - [ ] Запрет доступа вне workspace
 - [ ] Запрет `.ssh`
 - [ ] Запрет `.aws`

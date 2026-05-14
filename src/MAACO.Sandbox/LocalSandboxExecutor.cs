@@ -5,11 +5,59 @@ namespace MAACO.Sandbox;
 
 public sealed class LocalSandboxExecutor : ISandboxExecutor
 {
+    private static readonly HashSet<string> AllowedCommands = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "dotnet",
+        "cmd.exe",
+        "powershell.exe",
+        "pwsh.exe",
+        "npm",
+        "node",
+        "python",
+        "python.exe",
+        "pytest"
+    };
+
+    private static readonly string[] DangerousArgumentTokens =
+    [
+        "rm -rf /",
+        "sudo",
+        "format",
+        "mkfs",
+        "del /s",
+        "curl | sh",
+        "wget | sh",
+        "shutdown",
+        "reboot"
+    ];
+
     public async Task<SandboxResult> ExecuteAsync(SandboxRequest request, CancellationToken cancellationToken)
     {
         var startedAt = DateTimeOffset.UtcNow;
         try
         {
+            if (!IsAllowedCommand(request.FileName))
+            {
+                return new SandboxResult(
+                    Succeeded: false,
+                    ExitCode: -1,
+                    StdOut: string.Empty,
+                    StdErr: string.Empty,
+                    Duration: DateTimeOffset.UtcNow - startedAt,
+                    Error: "Command is not in sandbox allowlist.");
+            }
+
+            if (ContainsDangerousArguments(request.Arguments))
+            {
+                return new SandboxResult(
+                    Succeeded: false,
+                    ExitCode: -1,
+                    StdOut: string.Empty,
+                    StdErr: string.Empty,
+                    Duration: DateTimeOffset.UtcNow - startedAt,
+                    Error: "Command contains blocked dangerous pattern.");
+            }
+
             var workspacePath = Path.GetFullPath(request.WorkspacePath);
             var workingDirectory = ResolveWorkingDirectory(workspacePath, request.Options.WorkingDirectory);
             if (!IsWithinWorkspace(workspacePath, workingDirectory))
@@ -147,5 +195,23 @@ public sealed class LocalSandboxExecutor : ISandboxExecutor
 
             startInfo.Environment[key] = value ?? string.Empty;
         }
+    }
+
+    private static bool IsAllowedCommand(string fileName)
+    {
+        var normalized = fileName.Trim();
+        var command = Path.GetFileName(normalized);
+        return AllowedCommands.Contains(command);
+    }
+
+    private static bool ContainsDangerousArguments(string arguments)
+    {
+        if (string.IsNullOrWhiteSpace(arguments))
+        {
+            return false;
+        }
+
+        return DangerousArgumentTokens.Any(token =>
+            arguments.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 }
