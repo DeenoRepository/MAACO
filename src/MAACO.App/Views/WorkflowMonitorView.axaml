@@ -10,6 +10,18 @@
                 <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}" />
             </DockPanel>
             <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
+            <Border Padding="8" Background="#102B52" CornerRadius="6">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="Realtime:" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding RealtimeStatus}" />
+                </StackPanel>
+            </Border>
+            <Border Padding="8" Background="#5A1A1A" CornerRadius="6" IsVisible="{Binding HasErrors}">
+                <StackPanel Spacing="2">
+                    <TextBlock Text="Error Detected" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding LatestErrorMessage}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
             <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Workflow Id:" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorkflowId}" TextWrapping="Wrap"/>
@@ -23,18 +35,20 @@
             <TextBlock Text="{Binding TimelineStatus}" />
             <Border Padding="8" Background="#0A141E" CornerRadius="8">
                 <StackPanel Spacing="4">
-                    <Grid ColumnDefinitions="*,150,120">
-                        <TextBlock Grid.Column="0" Text="Step" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="2" Text="Duration" FontWeight="SemiBold" />
+                    <Grid ColumnDefinitions="30,*,150,120">
+                        <TextBlock Grid.Column="0" Text="" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="Step" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="3" Text="Duration" FontWeight="SemiBold" />
                     </Grid>
                     <ItemsControl ItemsSource="{Binding Steps}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:WorkflowStepItemViewModel">
-                                <Grid ColumnDefinitions="*,150,120">
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}" TextWrapping="Wrap" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Status}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Duration}" />
+                                <Grid ColumnDefinitions="30,*,150,120">
+                                    <TextBlock Grid.Column="0" Text="{Binding Marker}" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="2" Text="{Binding Status}" />
+                                    <TextBlock Grid.Column="3" Text="{Binding Duration}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

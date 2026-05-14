@@ -34,6 +34,18 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
     [ObservableProperty]
     private string timelineStatus = "No workflow selected.";
 
+    [ObservableProperty]
+    private string realtimeStatus = "Disconnected";
+
+    [ObservableProperty]
+    private bool isRealtimeActive;
+
+    [ObservableProperty]
+    private bool hasErrors;
+
+    [ObservableProperty]
+    private string latestErrorMessage = "No errors detected.";
+
     public ObservableCollection<WorkflowStepItemViewModel> Steps { get; } = [];
     public ObservableCollection<WorkflowLogItemViewModel> Logs { get; } = [];
     public ObservableCollection<WorkflowLogItemViewModel> FilteredLogs { get; } = [];
@@ -120,6 +132,7 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
                               || string.Equals(x.Status, "Pending", StringComparison.OrdinalIgnoreCase));
         CurrentStep = active?.Name ?? steps.OrderByDescending(x => x.Order).FirstOrDefault()?.Name ?? "n/a";
         TimelineStatus = $"Loaded {steps.Count} step(s).";
+        MarkCurrentStep();
     }
 
     [RelayCommand]
@@ -152,6 +165,9 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
             return;
         }
 
+        IsRealtimeActive = true;
+        RealtimeStatus = $"Live ({realtimeEvent.OccurredAt:HH:mm:ss})";
+
         Logs.Insert(0, new WorkflowLogItemViewModel(
             realtimeEvent.OccurredAt,
             realtimeEvent.Severity,
@@ -165,6 +181,8 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
 
         ApplyLogFilters();
         UpdateAgentActivity(realtimeEvent);
+        UpdateWorkflowProgress(realtimeEvent);
+        UpdateErrorState(realtimeEvent);
     }
 
     private void ApplyLogFilters()
@@ -211,12 +229,82 @@ public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenVie
         var estimate = Math.Max(1, realtimeEvent.Message.Length / 4);
         TokenEstimate = estimate.ToString();
     }
+
+    private void UpdateWorkflowProgress(RealtimeEvent realtimeEvent)
+    {
+        if (string.Equals(realtimeEvent.EventType, "StepStarted", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(realtimeEvent.Message))
+        {
+            CurrentStep = realtimeEvent.Message;
+            TimelineStatus = $"Running step: {CurrentStep}";
+            MarkCurrentStep();
+            return;
+        }
+
+        if (string.Equals(realtimeEvent.EventType, "StepCompleted", StringComparison.OrdinalIgnoreCase))
+        {
+            TimelineStatus = $"Completed step: {CurrentStep}";
+            return;
+        }
+
+        if (string.Equals(realtimeEvent.EventType, "WorkflowCompleted", StringComparison.OrdinalIgnoreCase))
+        {
+            WorkflowStatus = "Completed";
+            TimelineStatus = "Workflow completed.";
+            return;
+        }
+
+        if (string.Equals(realtimeEvent.EventType, "WorkflowFailed", StringComparison.OrdinalIgnoreCase))
+        {
+            WorkflowStatus = "Failed";
+            TimelineStatus = "Workflow failed.";
+        }
+    }
+
+    private void UpdateErrorState(RealtimeEvent realtimeEvent)
+    {
+        if (string.Equals(realtimeEvent.Severity, "Error", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(realtimeEvent.EventType, "StepFailed", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(realtimeEvent.EventType, "WorkflowFailed", StringComparison.OrdinalIgnoreCase))
+        {
+            HasErrors = true;
+            LatestErrorMessage = realtimeEvent.Message;
+        }
+    }
+
+    private void MarkCurrentStep()
+    {
+        foreach (var step in Steps)
+        {
+            step.IsCurrent = string.Equals(step.Name, CurrentStep, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }
 
-public sealed record WorkflowStepItemViewModel(
-    string Name,
-    string Status,
-    string Duration);
+public sealed partial class WorkflowStepItemViewModel : ObservableObject
+{
+    public WorkflowStepItemViewModel(string name, string status, string duration)
+    {
+        Name = name;
+        Status = status;
+        Duration = duration;
+    }
+
+    public string Name { get; }
+    public string Status { get; }
+    public string Duration { get; }
+
+    [ObservableProperty]
+    private bool isCurrent;
+
+    [ObservableProperty]
+    private string marker = string.Empty;
+
+    partial void OnIsCurrentChanged(bool value)
+    {
+        Marker = value ? ">>" : string.Empty;
+    }
+}
 
 public sealed record WorkflowLogItemViewModel(
     DateTimeOffset Timestamp,

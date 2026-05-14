@@ -892,10 +892,10 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Workflow progress виден realtime
-- [ ] Логи обновляются без refresh
-- [ ] Ошибки явно подсвечены
-- [ ] Пользователь понимает текущий этап
+- [x] Workflow progress виден realtime
+- [x] Логи обновляются без refresh
+- [x] Ошибки явно подсвечены
+- [x] Пользователь понимает текущий этап
 
 ---
 
