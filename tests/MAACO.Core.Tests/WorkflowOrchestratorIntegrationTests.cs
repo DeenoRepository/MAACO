@@ -69,10 +69,13 @@ public sealed class WorkflowOrchestratorIntegrationTests
             var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
             var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
             var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).OrderBy(x => x.Order).ToListAsync();
+            var artifacts = await db.Artifacts.Where(x => x.TaskId == taskId).OrderBy(x => x.CreatedAt).ToListAsync();
 
             Assert.Equal(WorkflowStatus.Completed, workflow.Status);
             Assert.Equal(2, steps.Count);
             Assert.All(steps, step => Assert.Equal(WorkflowStepStatus.Completed, step.Status));
+            Assert.Equal(2, artifacts.Count);
+            Assert.All(artifacts, artifact => Assert.Equal(ArtifactType.Snapshot, artifact.Type));
         }
     }
 }

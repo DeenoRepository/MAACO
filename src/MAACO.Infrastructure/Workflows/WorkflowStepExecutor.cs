@@ -9,6 +9,7 @@ namespace MAACO.Infrastructure.Workflows;
 
 public sealed class WorkflowStepExecutor(
     IWorkflowRepository workflowRepository,
+    IArtifactRepository artifactRepository,
     IEventBus eventBus)
 {
     public async Task ExecuteAsync(
@@ -33,6 +34,17 @@ public sealed class WorkflowStepExecutor(
 
             step.Status = WorkflowStepStatus.Completed;
             await workflowRepository.SaveChangesAsync(cancellationToken);
+
+            await artifactRepository.AddAsync(
+                new Artifact
+                {
+                    TaskId = context.TaskId,
+                    Type = ArtifactType.Snapshot,
+                    Path = $"checkpoint://workflow/{context.WorkflowId:D}/step/{step.Order}",
+                    Hash = $"{step.Name}:{step.Status}:{DateTimeOffset.UtcNow:O}"
+                },
+                cancellationToken);
+            await artifactRepository.SaveChangesAsync(cancellationToken);
 
             await eventBus.PublishAsync(
                 new WorkflowStepCompletedEvent(

@@ -34,6 +34,9 @@ public sealed class WorkflowOrchestrator(
             await workflowRepository.AddWorkflowAsync(workflow, cancellationToken);
         }
 
+        workflow.Status = WorkflowStatus.Running;
+        await workflowRepository.SaveChangesAsync(cancellationToken);
+
         await eventBus.PublishAsync(
             new WorkflowStartedEvent(
                 workflow.Id,
@@ -59,6 +62,9 @@ public sealed class WorkflowOrchestrator(
 
         await workflowRepository.SaveChangesAsync(cancellationToken);
         await stepExecutor.ExecuteAsync(context, steps, cancellationToken);
+
+        workflow.Status = WorkflowStatus.Completed;
+        await workflowRepository.SaveChangesAsync(cancellationToken);
 
         await eventBus.PublishAsync(
             new WorkflowCompletedEvent(

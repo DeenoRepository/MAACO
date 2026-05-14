@@ -646,9 +646,9 @@ User Task
 - [x] Создать `IWorkflowOrchestrator`
 - [x] Создать `WorkflowExecutionContext`
 - [x] Создать `WorkflowStepExecutor`
-- [ ] Создать checkpoint после каждого step
-- [ ] Сохранять status workflow
-- [ ] Сохранять status step
+- [x] Создать checkpoint после каждого step
+- [x] Сохранять status workflow
+- [x] Сохранять status step
 - [ ] Публиковать realtime events
 - [ ] Поддержать cancellation
 
