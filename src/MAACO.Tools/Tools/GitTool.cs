@@ -32,6 +32,11 @@ public sealed class GitTool : IAgentTool
             return Fail("Target path is not a git repository.", request.CorrelationId, startedAt);
         }
 
+        if (IsForbiddenOperation(request.Input))
+        {
+            return Fail("Git push operations are disabled in MVP.", request.CorrelationId, startedAt);
+        }
+
         var operation = ParseGitOperation(request.Input);
         if (operation is null)
         {
@@ -116,6 +121,14 @@ public sealed class GitTool : IAgentTool
             "rollback-uncommitted" => new GitOperationSpec("rollback-uncommitted", "restore --staged --worktree -- ."),
             _ => null
         };
+    }
+
+    private static bool IsForbiddenOperation(string input)
+    {
+        var normalized = input.Trim().ToLowerInvariant();
+        return normalized == "push"
+            || normalized.StartsWith("push ", StringComparison.Ordinal)
+            || normalized.StartsWith("push:", StringComparison.Ordinal);
     }
 
     private static async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(

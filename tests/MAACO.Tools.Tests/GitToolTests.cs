@@ -204,6 +204,24 @@ public sealed class GitToolTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsPushOperation_InMvp()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "push origin main",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-push-disabled");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("disabled in MVP", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AcceptsRollbackUncommittedOperation_ForGitRepository()
     {
         var workspace = CreateWorkspace(isGitRepo: true);
