@@ -388,8 +388,8 @@ tests/
 
 ## Required tools
 
-- [ ] `FileSystemTool`
-- [ ] `ProjectScannerTool`
+- [x] `FileSystemTool`
+- [x] `ProjectScannerTool`
 - [ ] `CodePatchTool`
 - [ ] `BuildTool`
 - [ ] `TestTool`
@@ -399,12 +399,12 @@ tests/
 
 ## Tool safety
 
-- [ ] Проверка permissions
-- [ ] Проверка workspace boundary
+- [x] Проверка permissions
+- [x] Проверка workspace boundary
 - [ ] Логирование input/output
 - [ ] Redaction secrets
-- [ ] Max output length
-- [ ] Error normalization
+- [x] Max output length
+- [x] Error normalization
 
 ### Acceptance Criteria
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
