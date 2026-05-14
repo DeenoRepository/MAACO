@@ -414,6 +414,78 @@ public sealed class WorkflowOrchestratorIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_PersistsStepStateAfterEachStep()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+        Guid taskId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project { Name = "state-project", RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".") };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+
+            var task = new TaskItem { ProjectId = project.Id, Title = "state-task" };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = taskId, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(Guid.NewGuid(), taskId, workflowId, "state-check", "corr-state"),
+                ["ProjectScanStep", "PlanningStep", "BuildStep", "TestStep"],
+                CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).OrderBy(x => x.Order).ToListAsync();
+            var artifacts = (await db.Artifacts.Where(x => x.TaskId == taskId).ToListAsync())
+                .OrderBy(x => x.CreatedAt)
+                .ToList();
+
+            Assert.Equal(4, steps.Count);
+            Assert.All(steps, x => Assert.Equal(WorkflowStepStatus.Completed, x.Status));
+            Assert.Equal(4, artifacts.Count);
+
+            for (var i = 0; i < steps.Count; i++)
+            {
+                var step = steps[i];
+                var artifact = artifacts[i];
+                Assert.Equal(ArtifactType.Snapshot, artifact.Type);
+                Assert.Contains($"/step/{step.Order}", artifact.Path, StringComparison.Ordinal);
+                Assert.Contains(step.Name, artifact.Hash ?? string.Empty, StringComparison.Ordinal);
+                Assert.Contains("Completed", artifact.Hash ?? string.Empty, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WhenBuildFailsBeyondRetryLimit_MarksWorkflowFailed()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
@@ -483,6 +555,8 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Equal(WorkflowStepStatus.Failed, step.Status);
             Assert.Contains(logs, x => x.Message.Contains("BuildStep reached max debug retries (3)", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("failed", StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(logs, x => x.Message.Contains("Debug attempt", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.TaskId == taskId && x.CorrelationId == "corr-retry-fail");
         }
     }
 

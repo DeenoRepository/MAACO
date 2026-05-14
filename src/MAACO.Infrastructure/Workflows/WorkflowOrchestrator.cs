@@ -35,6 +35,8 @@ public sealed class WorkflowOrchestrator(
             await workflowRepository.AddWorkflowAsync(workflow, cancellationToken);
         }
 
+        var executionContext = context with { WorkflowId = workflow.Id };
+
         workflow.Status = WorkflowStatus.Running;
         await workflowRepository.SaveChangesAsync(cancellationToken);
 
@@ -43,7 +45,7 @@ public sealed class WorkflowOrchestrator(
                 workflow.Id,
                 workflow.TaskId,
                 DateTimeOffset.UtcNow,
-                context.CorrelationId),
+                executionContext.CorrelationId),
             cancellationToken);
 
         var steps = new List<WorkflowStep>(stepNames.Count);
@@ -64,7 +66,7 @@ public sealed class WorkflowOrchestrator(
         await workflowRepository.SaveChangesAsync(cancellationToken);
         try
         {
-            await stepExecutor.ExecuteAsync(context, steps, cancellationToken);
+            await stepExecutor.ExecuteAsync(executionContext, steps, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -101,7 +103,7 @@ public sealed class WorkflowOrchestrator(
                     workflow.Id,
                     ex.Message,
                     DateTimeOffset.UtcNow,
-                    context.CorrelationId),
+                    executionContext.CorrelationId),
                 CancellationToken.None);
             throw;
         }
@@ -113,7 +115,7 @@ public sealed class WorkflowOrchestrator(
             new WorkflowCompletedEvent(
                 workflow.Id,
                 DateTimeOffset.UtcNow,
-                context.CorrelationId),
+                executionContext.CorrelationId),
             cancellationToken);
 
         return workflow;

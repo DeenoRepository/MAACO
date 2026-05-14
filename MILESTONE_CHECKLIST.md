@@ -683,8 +683,8 @@ User Task
 
 - [x] Workflow создается из task
 - [x] Steps выполняются последовательно
-- [ ] State сохраняется после каждого step
-- [ ] Failure не теряет контекст
+- [x] State сохраняется после каждого step
+- [x] Failure не теряет контекст
 - [ ] Debug loop работает
 - [ ] Workflow можно cancel
 
