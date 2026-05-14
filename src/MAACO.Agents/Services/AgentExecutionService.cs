@@ -9,6 +9,20 @@ public sealed class AgentExecutionService(IAgentRegistry agentRegistry) : IAgent
         AgentContext context,
         CancellationToken cancellationToken)
     {
+        var safetyError = AgentInputSafetyGuard.Validate(context);
+        if (safetyError is not null)
+        {
+            return new AgentResult(
+                Succeeded: false,
+                Output: string.Empty,
+                Error: safetyError,
+                Metadata: new Dictionary<string, string>
+                {
+                    ["agent"] = agentName,
+                    ["decision"] = "Blocked direct file access payload. Tools layer is required."
+                });
+        }
+
         var agent = agentRegistry.GetByName(agentName);
         if (agent is null)
         {

@@ -70,6 +70,55 @@ public sealed class AgentRuntimeAbstractionsTests
     }
 
     [Fact]
+    public async Task AgentExecutionService_BlocksDirectFileMutationPayload()
+    {
+        var agent = new FakeAgent("BackendDeveloperAgent");
+        var registry = new AgentRegistry([agent]);
+        var service = new AgentExecutionService(registry);
+        var context = new AgentContext(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "mutate file",
+            new Dictionary<string, string>
+            {
+                ["operation"] = "write",
+                ["path"] = "src/SomeFile.cs",
+                ["content"] = "new content"
+            });
+
+        var result = await service.ExecuteAsync("BackendDeveloperAgent", context, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("forbidden", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AgentExecutionService_AllowsToolDelegationPayload()
+    {
+        var tool = new FakeTool("DemoTool");
+        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog());
+        var registry = new AgentRegistry([agent]);
+        var service = new AgentExecutionService(registry);
+        var context = new AgentContext(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "plan",
+            new Dictionary<string, string>
+            {
+                ["toolName"] = "DemoTool",
+                ["toolInput"] = "ping",
+                ["workspacePath"] = "D:/Projects/MAACO"
+            });
+
+        var result = await service.ExecuteAsync("TaskPlannerAgent", context, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, tool.CallCount);
+    }
+
+    [Fact]
     public async Task AddMaacoAgents_RegistersAllMilestoneAgents()
     {
         var services = new ServiceCollection();

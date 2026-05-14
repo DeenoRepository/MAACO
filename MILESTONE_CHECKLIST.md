@@ -589,7 +589,7 @@ tests/
 
 ## Agent constraints
 
-- [ ] Agents не пишут файлы напрямую
+- [x] Agents не пишут файлы напрямую
 - [x] Agents используют tools
 - [x] Agents получают scoped context
 - [x] Agents логируют решения
