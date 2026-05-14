@@ -3,6 +3,7 @@ namespace MAACO.App.ViewModels;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MAACO.App.Services;
+using MAACO.App.Services.Models;
 using System.Collections.ObjectModel;
 using Avalonia.Media;
 
@@ -330,6 +331,9 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
     [ObservableProperty]
     private string diffText = string.Empty;
 
+    [ObservableProperty]
+    private string generatedCommitMessage = string.Empty;
+
     public ObservableCollection<string> ChangedFiles { get; } = [];
     public ObservableCollection<DiffLineViewModel> DiffLines { get; } = [];
 
@@ -348,14 +352,17 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         {
             DiffStatus = "Enter valid task id.";
             DiffText = string.Empty;
+            GeneratedCommitMessage = string.Empty;
             return;
         }
 
+        var task = await tasksClient.GetTaskByIdAsync(parsedTaskId, CancellationToken.None);
         var diff = await tasksClient.GetTaskDiffAsync(parsedTaskId, CancellationToken.None);
         if (diff is null)
         {
             DiffStatus = "Failed to load diff.";
             DiffText = string.Empty;
+            GeneratedCommitMessage = string.Empty;
             return;
         }
 
@@ -376,6 +383,8 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         {
             ChangedFiles.Add("No changed files parsed from diff.");
         }
+
+        GeneratedCommitMessage = BuildGeneratedCommitMessage(task, ChangedFiles);
     }
 
     private static IReadOnlyList<string> ExtractChangedFiles(string diffText)
@@ -418,6 +427,19 @@ public sealed partial class DiffReviewViewModel : BaseViewModel, IScreenViewMode
         }
 
         return result;
+    }
+
+    private static string BuildGeneratedCommitMessage(TaskDto? task, IReadOnlyCollection<string> changedFiles)
+    {
+        var normalizedTitle = string.IsNullOrWhiteSpace(task?.Title)
+            ? "update project changes"
+            : task!.Title.Trim().ToLowerInvariant();
+
+        var summary = changedFiles.Count == 0
+            ? "no files listed"
+            : $"{changedFiles.Count} file(s) changed";
+
+        return $"feat(maaco): {normalizedTitle}{Environment.NewLine}{Environment.NewLine}- {summary}";
     }
 }
 

@@ -912,7 +912,7 @@ User Task
 - [x] Показать changed files
 - [x] Показать unified diff
 - [x] Подсветить added/removed lines
-- [ ] Показать generated commit message
+- [x] Показать generated commit message
 - [ ] Позволить изменить commit message
 
 ## Approval

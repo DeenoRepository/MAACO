@@ -29,6 +29,12 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </Border>
+            <TextBlock Text="Generated Commit Message" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
+            <Border Padding="8" Background="#0A141E" CornerRadius="8">
+                <TextBlock Text="{Binding GeneratedCommitMessage}"
+                           FontFamily="Cascadia Code, Consolas, monospace"
+                           TextWrapping="Wrap" />
+            </Border>
         </StackPanel>
     </Border>
 </UserControl>

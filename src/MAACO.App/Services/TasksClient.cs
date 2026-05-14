@@ -25,6 +25,17 @@ public sealed class TasksClient(HttpClient httpClient) : ITasksClient
         return await response.Content.ReadFromJsonAsync<TaskDto>(cancellationToken: cancellationToken);
     }
 
+    public async Task<TaskDto?> GetTaskByIdAsync(Guid taskId, CancellationToken cancellationToken)
+    {
+        var response = await httpClient.GetAsync($"api/tasks/{taskId:D}", cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<TaskDto>(cancellationToken: cancellationToken);
+    }
+
     public async Task<TaskDiffResponse?> GetTaskDiffAsync(Guid taskId, CancellationToken cancellationToken)
     {
         var response = await httpClient.GetAsync($"api/tasks/{taskId:D}/diff", cancellationToken);
