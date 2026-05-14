@@ -339,4 +339,69 @@ public sealed class MemoryServiceIntegrationTests
             Assert.Contains("file summary", context.FileSummaries);
         }
     }
+
+    [Fact]
+    public async Task MemoryRecord_FutureReadyFields_ArePersisted()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        Guid projectId;
+        Guid memoryId;
+
+        await using (var seedScope = provider.CreateAsyncScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "vector-ready-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            projectId = project.Id;
+
+            var record = new MemoryRecord
+            {
+                ProjectId = projectId,
+                Type = MemoryRecordType.Summary,
+                Key = "ProjectSummary",
+                Value = "summary",
+                EmbeddingProvider = "local-embedding",
+                EmbeddingModel = "text-embed-v1",
+                EmbeddingHash = "emb-hash-123",
+                VectorRef = "vec://project/summary/1",
+                ContentHash = "content-hash-123"
+            };
+
+            await db.MemoryRecords.AddAsync(record);
+            await db.SaveChangesAsync();
+            memoryId = record.Id;
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var record = await db.MemoryRecords.SingleAsync(x => x.Id == memoryId);
+
+            Assert.Equal("local-embedding", record.EmbeddingProvider);
+            Assert.Equal("text-embed-v1", record.EmbeddingModel);
+            Assert.Equal("emb-hash-123", record.EmbeddingHash);
+            Assert.Equal("vec://project/summary/1", record.VectorRef);
+            Assert.Equal("content-hash-123", record.ContentHash);
+        }
+    }
 }

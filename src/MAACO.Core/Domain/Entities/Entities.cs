@@ -87,6 +87,11 @@ public sealed class MemoryRecord : AuditableEntity
     public MemoryRecordType Type { get; set; }
     public string Key { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;
+    public string? EmbeddingProvider { get; set; }
+    public string? EmbeddingModel { get; set; }
+    public string? EmbeddingHash { get; set; }
+    public string? VectorRef { get; set; }
+    public string? ContentHash { get; set; }
 }
 
 public sealed class ApprovalRequest : AuditableEntity

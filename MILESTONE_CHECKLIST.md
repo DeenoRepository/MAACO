@@ -718,18 +718,18 @@ User Task
 
 ## Future-ready fields
 
-- [ ] `EmbeddingProvider`
-- [ ] `EmbeddingModel`
-- [ ] `EmbeddingHash`
-- [ ] `VectorRef`
-- [ ] `ContentHash`
+- [x] `EmbeddingProvider`
+- [x] `EmbeddingModel`
+- [x] `EmbeddingHash`
+- [x] `VectorRef`
+- [x] `ContentHash`
 
 ### Acceptance Criteria
 
 - [x] Agents получают project context
-- [ ] Build/test failures сохраняются
+- [x] Build/test failures сохраняются
 - [x] Previous task summaries доступны
-- [ ] Schema готова к vector search
+- [x] Schema готова к vector search
 
 ---
 
