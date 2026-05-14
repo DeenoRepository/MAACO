@@ -501,7 +501,7 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Diff генерируется
+- [x] Diff генерируется
 - [ ] Commit создается после approval
 - [ ] Reject откатывает изменения
 - [ ] Git operations сохраняются в БД

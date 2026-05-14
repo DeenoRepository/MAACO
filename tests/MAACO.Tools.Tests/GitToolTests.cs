@@ -3,6 +3,7 @@ using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using MAACO.Tools.Tools;
 using System.Reflection;
+using System.Text.Json;
 
 namespace MAACO.Tools.Tests;
 
@@ -96,6 +97,28 @@ public sealed class GitToolTests
 
         Assert.DoesNotContain("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_DiffOperation_ReturnsStructuredOutput()
+    {
+        var workspace = CreateWorkspace(isGitRepo: true);
+        var tool = new GitTool();
+        var request = new ToolRequest(
+            tool.Name,
+            "diff",
+            workspace,
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-diff-structured");
+
+        var result = await tool.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(string.IsNullOrWhiteSpace(result.Output));
+        using var document = JsonDocument.Parse(result.Output);
+        var root = document.RootElement;
+        Assert.Equal("diff", root.GetProperty("operation").GetString());
+        Assert.Equal("git diff -- .", root.GetProperty("command").GetString());
+        Assert.True(root.TryGetProperty("exitCode", out _));
     }
 
     [Fact]
