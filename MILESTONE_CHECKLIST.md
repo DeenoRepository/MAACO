@@ -920,17 +920,17 @@ User Task
 - [x] Approve button
 - [x] Reject button
 - [x] Reject with reason
-- [ ] Approve вызывает commit
-- [ ] Reject вызывает rollback
-- [ ] Показать результат операции
+- [x] Approve вызывает commit
+- [x] Reject вызывает rollback
+- [x] Показать результат операции
 
 ### Acceptance Criteria
 
 - [ ] Workflow останавливается на approval
-- [ ] Пользователь видит diff
+- [x] Пользователь видит diff
 - [ ] Approve создает commit
 - [ ] Reject откатывает изменения
-- [ ] Результат виден в UI
+- [x] Результат виден в UI
 
 ---
 
