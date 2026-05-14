@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using FluentValidation.AspNetCore;
 using MAACO.Api.Contracts.Projects;
+using MAACO.Api.Services;
 using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Entities;
 using MAACO.Core.Domain.ValueObjects;
@@ -12,7 +13,8 @@ namespace MAACO.Api.Controllers;
 [Route("api/projects")]
 public sealed class ProjectsController(
     IProjectRepository projectRepository,
-    IValidator<CreateProjectRequest> createProjectRequestValidator) : ControllerBase
+    IValidator<CreateProjectRequest> createProjectRequestValidator,
+    IProjectPathValidator projectPathValidator) : ControllerBase
 {
     public sealed record StartProjectScanResponse(Guid ProjectId, string Status, string Message);
 
@@ -52,10 +54,17 @@ public sealed class ProjectsController(
             return this.ValidationError();
         }
 
+        var pathValidation = await projectPathValidator.ValidateAsync(request.RepositoryPath, cancellationToken);
+        if (!pathValidation.IsValid)
+        {
+            ModelState.AddModelError(nameof(request.RepositoryPath), pathValidation.ErrorMessage ?? "Invalid repository path.");
+            return this.ValidationError();
+        }
+
         var project = new Project
         {
             Name = request.Name.Trim(),
-            RepositoryPath = new RepositoryPath(request.RepositoryPath.Trim())
+            RepositoryPath = new RepositoryPath(pathValidation.NormalizedPath!)
         };
 
         await projectRepository.AddAsync(project, cancellationToken);
@@ -90,4 +99,3 @@ public sealed class ProjectsController(
             project.UpdatedAt,
             project.Version);
 }
-

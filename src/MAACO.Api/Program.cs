@@ -24,6 +24,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton<ISettingsService, InMemorySettingsService>();
+builder.Services.AddSingleton<IProjectPathValidator, ProjectPathValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
