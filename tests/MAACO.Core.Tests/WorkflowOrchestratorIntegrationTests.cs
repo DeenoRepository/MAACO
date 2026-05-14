@@ -414,6 +414,80 @@ public sealed class WorkflowOrchestratorIntegrationTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WithDetectedBuildCommand_PersistsBuildRunAndArtifacts()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+        Guid taskId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project { Name = "detected-build-project", RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".") };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+            var task = new TaskItem { ProjectId = project.Id, Title = "detected-build-task" };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow { TaskId = taskId, Status = WorkflowStatus.Created };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await orchestrator.ExecuteAsync(
+                new WorkflowExecutionContext(
+                    Guid.NewGuid(),
+                    taskId,
+                    workflowId,
+                    "detected-build",
+                    "corr-build-detected",
+                    new Dictionary<string, string>
+                    {
+                        ["BuildCommand"] = "dotnet --version",
+                        ["WorkspacePath"] = Environment.CurrentDirectory
+                    }),
+                ["BuildStep"],
+                CancellationToken.None);
+        }
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var buildRuns = await db.BuildRuns.Where(x => x.WorkflowId == workflowId).ToListAsync();
+            var buildArtifacts = await db.Artifacts.Where(x => x.TaskId == taskId && x.Type == ArtifactType.BuildLog).ToListAsync();
+            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+            Assert.Single(buildRuns);
+            Assert.Equal(BuildRunStatus.Succeeded, buildRuns[0].Status);
+            Assert.True(buildRuns[0].Duration >= TimeSpan.Zero);
+            Assert.Equal(2, buildArtifacts.Count);
+            Assert.Contains(buildArtifacts, x => x.Path.EndsWith("/stdout", StringComparison.Ordinal));
+            Assert.Contains(buildArtifacts, x => x.Path.EndsWith("/stderr", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("ExitCode=0", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
     public async Task ExecuteAsync_PersistsStepStateAfterEachStep()
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");

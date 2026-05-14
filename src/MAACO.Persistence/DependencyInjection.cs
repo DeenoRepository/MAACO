@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IWorkflowRepository, WorkflowRepository>();
         services.AddScoped<IToolExecutionRepository, ToolExecutionRepository>();
+        services.AddScoped<IBuildRunRepository, BuildRunRepository>();
         services.AddScoped<IGitOperationRepository, GitOperationRepository>();
         services.AddScoped<ILlmCallLogRepository, LlmCallLogRepository>();
         services.AddScoped<ILogRepository, LogRepository>();

@@ -742,11 +742,11 @@ User Task
 
 ## Build
 
-- [ ] Выполнять detected build command
-- [ ] Сохранять `BuildRun`
-- [ ] Сохранять stdout/stderr artifact
-- [ ] Парсить exit code
-- [ ] Публиковать events
+- [x] Выполнять detected build command
+- [x] Сохранять `BuildRun`
+- [x] Сохранять stdout/stderr artifact
+- [x] Парсить exit code
+- [x] Публиковать events
 
 ## Test
 
