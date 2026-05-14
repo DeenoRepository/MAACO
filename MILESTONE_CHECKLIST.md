@@ -663,12 +663,12 @@ User Task
 - [x] BuildStep
 - [x] TestStep
 - [x] DebugStep
-- [ ] DiffStep
-- [ ] ApprovalStep
-- [ ] CommitStep
-- [ ] RollbackStep
-- [ ] DocumentationStep
-- [ ] FinalReportStep
+- [x] DiffStep
+- [x] ApprovalStep
+- [x] CommitStep
+- [x] RollbackStep
+- [x] DocumentationStep
+- [x] FinalReportStep
 
 ## Retry/debug loop
 
