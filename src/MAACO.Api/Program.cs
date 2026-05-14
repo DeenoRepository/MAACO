@@ -7,6 +7,7 @@ using MAACO.Core.Domain.Events;
 using MAACO.Infrastructure;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
+using MAACO.Tools;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
 using Serilog;
@@ -56,6 +57,7 @@ builder.Services
 var connectionString = builder.Configuration.GetConnectionString("Maaco") ?? "Data Source=maaco.db";
 builder.Services.AddMaacoPersistence(connectionString);
 builder.Services.AddMaacoInfrastructure();
+builder.Services.AddMaacoTools();
 
 builder.Services.AddSingleton<IEventHandler<TaskCreatedEvent>, TaskCreatedSignalrHandler>();
 builder.Services.AddSingleton<IEventHandler<WorkflowStartedEvent>, WorkflowStartedSignalrHandler>();

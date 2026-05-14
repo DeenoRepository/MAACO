@@ -11,6 +11,7 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - Completed: `Milestone 4 (Realtime Event Bus + SignalR)`
 - Completed: `Milestone 5 (Project Scanner)`
 - In progress: `Milestone 6 (Tooling Core)`
+- M6 progress: tool abstractions and registry foundation added (`IAgentTool`, `ToolRequest/ToolResult`, `ToolPermission`, `ToolRegistry`, DI, logging, timeout/cancellation)
 - M5 progress: repository path validation added (exists/readable/.git, restricted dirs block, normalized path)
 - M5 progress: file scanner added with ignore rules and limits (size/count), integrated into `POST /api/projects/{id}/scan`
 - M5 progress: stack detection added (.NET/Node.js/Python/Generic) with solution/project/manifests discovery

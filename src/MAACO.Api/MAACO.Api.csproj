@@ -26,6 +26,7 @@
     <ProjectReference Include="..\MAACO.Core\MAACO.Core.csproj" />
     <ProjectReference Include="..\MAACO.Infrastructure\MAACO.Infrastructure.csproj" />
     <ProjectReference Include="..\MAACO.Persistence\MAACO.Persistence.csproj" />
+    <ProjectReference Include="..\MAACO.Tools\MAACO.Tools.csproj" />
   </ItemGroup>
 
 </Project>

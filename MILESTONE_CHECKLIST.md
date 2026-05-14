@@ -376,15 +376,15 @@ tests/
 
 ## Tool abstractions
 
-- [ ] Создать `IAgentTool`
-- [ ] Создать `ToolRequest`
-- [ ] Создать `ToolResult`
-- [ ] Создать `ToolPermission`
-- [ ] Создать `ToolRegistry`
-- [ ] Добавить DI registration tools
-- [ ] Добавить tool execution logging
-- [ ] Добавить timeout support
-- [ ] Добавить cancellation support
+- [x] Создать `IAgentTool`
+- [x] Создать `ToolRequest`
+- [x] Создать `ToolResult`
+- [x] Создать `ToolPermission`
+- [x] Создать `ToolRegistry`
+- [x] Добавить DI registration tools
+- [x] Добавить tool execution logging
+- [x] Добавить timeout support
+- [x] Добавить cancellation support
 
 ## Required tools
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
