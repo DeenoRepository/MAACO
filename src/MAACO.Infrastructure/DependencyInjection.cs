@@ -45,6 +45,9 @@ public static class DependencyInjection
         services.AddScoped<IWorkflowStepHandler, CodeGenerationStepHandler>();
         services.AddScoped<IWorkflowStepHandler, PatchApplicationStepHandler>();
         services.AddScoped<IWorkflowStepHandler, TestGenerationStepHandler>();
+        services.AddScoped<IWorkflowStepHandler, BuildStepHandler>();
+        services.AddScoped<IWorkflowStepHandler, TestStepHandler>();
+        services.AddScoped<IWorkflowStepHandler, DebugStepHandler>();
         services.AddScoped<WorkflowStepExecutor>();
         services.AddScoped<IWorkflowOrchestrator, WorkflowOrchestrator>();
         return services;

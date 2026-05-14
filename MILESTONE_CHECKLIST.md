@@ -660,9 +660,9 @@ User Task
 - [x] CodeGenerationStep
 - [x] PatchApplicationStep
 - [x] TestGenerationStep
-- [ ] BuildStep
-- [ ] TestStep
-- [ ] DebugStep
+- [x] BuildStep
+- [x] TestStep
+- [x] DebugStep
 - [ ] DiffStep
 - [ ] ApprovalStep
 - [ ] CommitStep
