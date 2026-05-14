@@ -6,12 +6,6 @@ public sealed class DashboardViewModel : BaseViewModel, IScreenViewModel
     public string Description => "Workflow health and quick actions.";
 }
 
-public sealed class ProjectsViewModel : BaseViewModel, IScreenViewModel
-{
-    public string Title => "Projects";
-    public string Description => "Repository onboarding and project list.";
-}
-
 public sealed class TaskCreationViewModel : BaseViewModel, IScreenViewModel
 {
     public string Title => "Task Creation";

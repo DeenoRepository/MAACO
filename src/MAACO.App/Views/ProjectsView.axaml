@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:ProjectsViewModel"
+             x:Class="MAACO.App.Views.ProjectsView">
+    <StackPanel Spacing="12">
+        <TextBlock Text="Projects" FontSize="24" FontWeight="SemiBold" />
+        <TextBlock Text="Add a local repository and run an initial scan." Opacity="0.85" />
+
+        <Border Padding="12" Background="#112A2D34" CornerRadius="10">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Folder path" />
+                <TextBox Text="{Binding SelectedFolderPath}" PlaceholderText="D:\Projects\Repo" />
+
+                <TextBlock Text="Project name" />
+                <TextBox Text="{Binding ProjectName}" PlaceholderText="My repository" />
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Use Current Folder" Command="{Binding UseCurrentFolderCommand}" />
+                    <Button Content="Add + Scan" Command="{Binding AddAndScanProjectCommand}" />
+                    <ProgressBar Width="120" IsIndeterminate="{Binding IsBusy}" />
+                </StackPanel>
+                <TextBlock Text="{Binding Status}" />
+            </StackPanel>
+        </Border>
+
+        <Border Padding="12" Background="#112A2D34" CornerRadius="10">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Detected stack" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding DetectedStack}" />
+                <TextBlock Text="Build command" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <TextBlock Text="{Binding BuildCommand}" TextWrapping="Wrap" />
+                <TextBlock Text="Test command" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <TextBlock Text="{Binding TestCommand}" TextWrapping="Wrap" />
+                <TextBlock Text="Project files summary" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <TextBlock Text="{Binding ProjectFilesSummary}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

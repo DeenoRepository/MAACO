@@ -13,7 +13,7 @@
             <views:ScreenView />
         </DataTemplate>
         <DataTemplate DataType="vm:ProjectsViewModel">
-            <views:ScreenView />
+            <views:ProjectsView />
         </DataTemplate>
         <DataTemplate DataType="vm:TaskCreationViewModel">
             <views:ScreenView />

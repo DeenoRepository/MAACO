@@ -11,11 +11,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IApiClient, ApiClient>();
         services.AddSingleton<IRealtimeClient, RealtimeClient>();
+        services.AddSingleton<IProjectsClient, ProjectsClient>();
 
         services.AddHttpClient<IApiClient, ApiClient>(client =>
         {
             client.BaseAddress = new Uri("http://localhost:5168/");
             client.Timeout = TimeSpan.FromSeconds(15);
+        });
+        services.AddHttpClient<IProjectsClient, ProjectsClient>(client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:5168/");
+            client.Timeout = TimeSpan.FromSeconds(30);
         });
 
         services.AddSingleton<DashboardViewModel>();

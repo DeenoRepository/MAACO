@@ -833,12 +833,12 @@ User Task
 
 ## Projects UI
 
-- [ ] Выбрать folder
-- [ ] Добавить проект
-- [ ] Запустить scan
-- [ ] Показать detected stack
-- [ ] Показать build/test commands
-- [ ] Показать project files summary
+- [x] Выбрать folder
+- [x] Добавить проект
+- [x] Запустить scan
+- [x] Показать detected stack
+- [x] Показать build/test commands
+- [x] Показать project files summary
 
 ## Task UI
 
@@ -852,7 +852,7 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Пользователь добавляет local repo через UI
+- [x] Пользователь добавляет local repo через UI
 - [ ] Пользователь создает task через UI
 - [ ] Workflow стартует
 - [ ] UI показывает начальный статус workflow
