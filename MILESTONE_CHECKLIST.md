@@ -789,28 +789,28 @@ User Task
 
 ## App shell
 
-- [ ] Создать Avalonia app
-- [ ] Настроить MVVM
-- [ ] Настроить DI
-- [ ] Настроить navigation service
-- [ ] Настроить API client
-- [ ] Настроить SignalR client
+- [x] Создать Avalonia app
+- [x] Настроить MVVM
+- [x] Настроить DI
+- [x] Настроить navigation service
+- [x] Настроить API client
+- [x] Настроить SignalR client
 
 ## Screens
 
-- [ ] Dashboard
-- [ ] Projects Screen
-- [ ] Task Creation Screen
-- [ ] Workflow Monitor
-- [ ] Diff Review Screen
-- [ ] Settings Screen
-- [ ] Logs Screen
+- [x] Dashboard
+- [x] Projects Screen
+- [x] Task Creation Screen
+- [x] Workflow Monitor
+- [x] Diff Review Screen
+- [x] Settings Screen
+- [x] Logs Screen
 
 ## Layout
 
-- [ ] Sidebar navigation
-- [ ] Main content area
-- [ ] Status bar
+- [x] Sidebar navigation
+- [x] Main content area
+- [x] Status bar
 - [ ] Notifications/toasts
 - [ ] Loading/error states
 

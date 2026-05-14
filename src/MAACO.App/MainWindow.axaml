@@ -2,8 +2,58 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+        xmlns:views="clr-namespace:MAACO.App.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MAACO.App.MainWindow"
-        Title="MAACO.App">
-    Welcome to Avalonia!
+        x:DataType="vm:MainWindowViewModel"
+        Title="MAACO">
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:DashboardViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:ProjectsViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:TaskCreationViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:WorkflowMonitorViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:DiffReviewViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:SettingsViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:LogsViewModel">
+            <views:ScreenView />
+        </DataTemplate>
+    </Window.DataTemplates>
+    <Grid RowDefinitions="*,Auto" ColumnDefinitions="220,*">
+        <Border Grid.RowSpan="2" Background="#101A24" Padding="14">
+            <StackPanel Spacing="8">
+                <TextBlock Text="MAACO" FontSize="22" FontWeight="Bold" Margin="4,0,0,8"/>
+                <Button Content="Dashboard" Command="{Binding ShowDashboardCommand}" />
+                <Button Content="Projects" Command="{Binding ShowProjectsCommand}" />
+                <Button Content="Task Creation" Command="{Binding ShowTaskCreationCommand}" />
+                <Button Content="Workflow Monitor" Command="{Binding ShowWorkflowMonitorCommand}" />
+                <Button Content="Diff Review" Command="{Binding ShowDiffReviewCommand}" />
+                <Button Content="Settings" Command="{Binding ShowSettingsCommand}" />
+                <Button Content="Logs" Command="{Binding ShowLogsCommand}" />
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Column="1" Margin="12" Padding="12" Background="#0D1F2E">
+            <ContentControl Content="{Binding CurrentView}" />
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="1" Background="#0B1826" Padding="10">
+            <DockPanel>
+                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
+                <ProgressBar DockPanel.Dock="Right" Width="140" IsIndeterminate="{Binding IsBusy}" />
+            </DockPanel>
+        </Border>
+    </Grid>
 </Window>

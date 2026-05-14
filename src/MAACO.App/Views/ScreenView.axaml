@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:IScreenViewModel"
+             x:Class="MAACO.App.Views.ScreenView">
+    <Border Padding="24" CornerRadius="10" Background="#112A2D34">
+        <StackPanel Spacing="10">
+            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
+        </StackPanel>
+    </Border>
+</UserControl>
