@@ -928,8 +928,8 @@ User Task
 
 - [x] Workflow останавливается на approval
 - [x] Пользователь видит diff
-- [ ] Approve создает commit
-- [ ] Reject откатывает изменения
+- [x] Approve создает commit
+- [x] Reject откатывает изменения
 - [x] Результат виден в UI
 
 ---

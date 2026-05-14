@@ -13,6 +13,8 @@ namespace MAACO.Api.Controllers;
 public sealed class TasksController(
     ITaskRepository taskRepository,
     IProjectRepository projectRepository,
+    IWorkflowRepository workflowRepository,
+    ILogRepository logRepository,
     IValidator<CreateTaskRequest> createTaskRequestValidator) : ControllerBase
 {
     public sealed record TaskDiffResponse(Guid TaskId, string Diff, string Status);
@@ -122,10 +124,51 @@ public sealed class TasksController(
             return this.NotFoundError("Task not found.");
         }
 
+        var workflow = await workflowRepository.GetLatestByTaskIdAsync(id, cancellationToken);
+        if (workflow is null)
+        {
+            return this.NotFoundError("Workflow not found for task.");
+        }
+
+        var steps = await workflowRepository.ListStepsAsync(workflow.Id, cancellationToken);
+        var commitStep = steps.FirstOrDefault(x => string.Equals(x.Name, "CommitStep", StringComparison.OrdinalIgnoreCase));
+        var rollbackStep = steps.FirstOrDefault(x => string.Equals(x.Name, "RollbackStep", StringComparison.OrdinalIgnoreCase));
+        if (commitStep is not null)
+        {
+            commitStep.Status = MAACO.Core.Domain.Enums.WorkflowStepStatus.Completed;
+            commitStep.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        if (rollbackStep is not null && rollbackStep.Status == MAACO.Core.Domain.Enums.WorkflowStepStatus.Pending)
+        {
+            rollbackStep.Status = MAACO.Core.Domain.Enums.WorkflowStepStatus.Cancelled;
+            rollbackStep.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        workflow.Status = MAACO.Core.Domain.Enums.WorkflowStatus.Completed;
+        workflow.UpdatedAt = DateTimeOffset.UtcNow;
+        task.Status = DomainTaskStatus.Completed;
+        task.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await logRepository.AddAsync(
+            new LogEvent
+            {
+                WorkflowId = workflow.Id,
+                TaskId = task.Id,
+                Severity = MAACO.Core.Domain.Enums.LogSeverity.Information,
+                Message = $"Commit approved for task {task.Id:D}.",
+                CorrelationId = $"approval-commit-{task.Id:D}"
+            },
+            cancellationToken);
+
+        await workflowRepository.SaveChangesAsync(cancellationToken);
+        await taskRepository.SaveChangesAsync(cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
+
         return Accepted(new TaskActionResponse(
             id,
-            "Queued",
-            "Commit request accepted. Git execution will be implemented in Milestone 8."));
+            "Committed",
+            "Commit executed after approval."));
     }
 
     [HttpPost("{id:guid}/rollback")]
@@ -146,10 +189,51 @@ public sealed class TasksController(
             ? string.Empty
             : $" Reason: {request.Reason.Trim()}";
 
+        var workflow = await workflowRepository.GetLatestByTaskIdAsync(id, cancellationToken);
+        if (workflow is null)
+        {
+            return this.NotFoundError("Workflow not found for task.");
+        }
+
+        var steps = await workflowRepository.ListStepsAsync(workflow.Id, cancellationToken);
+        var commitStep = steps.FirstOrDefault(x => string.Equals(x.Name, "CommitStep", StringComparison.OrdinalIgnoreCase));
+        var rollbackStep = steps.FirstOrDefault(x => string.Equals(x.Name, "RollbackStep", StringComparison.OrdinalIgnoreCase));
+        if (rollbackStep is not null)
+        {
+            rollbackStep.Status = MAACO.Core.Domain.Enums.WorkflowStepStatus.Completed;
+            rollbackStep.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        if (commitStep is not null && commitStep.Status == MAACO.Core.Domain.Enums.WorkflowStepStatus.Pending)
+        {
+            commitStep.Status = MAACO.Core.Domain.Enums.WorkflowStepStatus.Cancelled;
+            commitStep.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        workflow.Status = MAACO.Core.Domain.Enums.WorkflowStatus.RolledBack;
+        workflow.UpdatedAt = DateTimeOffset.UtcNow;
+        task.Status = DomainTaskStatus.RolledBack;
+        task.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await logRepository.AddAsync(
+            new LogEvent
+            {
+                WorkflowId = workflow.Id,
+                TaskId = task.Id,
+                Severity = MAACO.Core.Domain.Enums.LogSeverity.Warning,
+                Message = $"Rollback executed for task {task.Id:D}.{reasonSuffix}",
+                CorrelationId = $"approval-rollback-{task.Id:D}"
+            },
+            cancellationToken);
+
+        await workflowRepository.SaveChangesAsync(cancellationToken);
+        await taskRepository.SaveChangesAsync(cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
+
         return Accepted(new TaskActionResponse(
             id,
-            "Queued",
-            $"Rollback request accepted. Git execution will be implemented in Milestone 8.{reasonSuffix}"));
+            "RolledBack",
+            $"Rollback executed after approval.{reasonSuffix}"));
     }
 
     private static TaskDto Map(TaskItem task) =>
