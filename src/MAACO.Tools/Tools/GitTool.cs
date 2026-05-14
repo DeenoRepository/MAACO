@@ -1,7 +1,7 @@
 using MAACO.Core.Abstractions.Tools;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace MAACO.Tools.Tools;
 
@@ -46,6 +46,15 @@ public sealed class GitTool : IAgentTool
 
         try
         {
+            if (operation.Name == "rollback-uncommitted")
+            {
+                return await ExecuteRollbackUncommittedAsync(
+                    request,
+                    startedAt,
+                    workingDirectory,
+                    cancellationToken);
+            }
+
             var (exitCode, stdOut, stdErr) = await RunProcessAsync(
                 "git",
                 operation.Command,
@@ -144,6 +153,123 @@ public sealed class GitTool : IAgentTool
         return null;
     }
 
+    private static async Task<ToolResult> ExecuteRollbackUncommittedAsync(
+        ToolRequest request,
+        DateTimeOffset startedAt,
+        string workingDirectory,
+        CancellationToken cancellationToken)
+    {
+        var (statusExitCode, statusStdOut, statusStdErr) = await RunProcessAsync(
+            "git",
+            "status --porcelain --untracked-files=all",
+            workingDirectory,
+            cancellationToken);
+
+        if (statusExitCode != 0)
+        {
+            return Fail(
+                $"Git command failed: status --porcelain --untracked-files=all. {Truncate(statusStdErr, 20000)}",
+                request.CorrelationId,
+                startedAt);
+        }
+
+        var changedFiles = ParseStatusPaths(statusStdOut);
+        var nonMaacoFiles = changedFiles
+            .Where(path => !IsMaacoManagedPath(path))
+            .ToArray();
+
+        if (nonMaacoFiles.Length > 0)
+        {
+            return Fail(
+                $"Rollback blocked: found non-MAACO changes ({string.Join(", ", nonMaacoFiles)}).",
+                request.CorrelationId,
+                startedAt);
+        }
+
+        var maacoFiles = changedFiles
+            .Where(IsMaacoManagedPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (maacoFiles.Length == 0)
+        {
+            return new ToolResult(
+                Succeeded: true,
+                Output: JsonSerializer.Serialize(new
+                {
+                    command = "git status --porcelain --untracked-files=all",
+                    operation = "rollback-uncommitted",
+                    restoredFiles = Array.Empty<string>(),
+                    cleanedFiles = Array.Empty<string>(),
+                    skipped = true,
+                    reason = "No MAACO-managed changes found."
+                }),
+                Error: null,
+                Duration: DateTimeOffset.UtcNow - startedAt,
+                CorrelationId: request.CorrelationId);
+        }
+
+        var quotedFiles = string.Join(" ", maacoFiles.Select(QuoteGitPath));
+
+        var (restoreExitCode, restoreStdOut, restoreStdErr) = await RunProcessAsync(
+            "git",
+            $"restore --staged --worktree -- {quotedFiles}",
+            workingDirectory,
+            cancellationToken);
+
+        if (restoreExitCode != 0)
+        {
+            return Fail(
+                $"Git command failed: restore --staged --worktree. {Truncate(restoreStdErr, 20000)}",
+                request.CorrelationId,
+                startedAt);
+        }
+
+        var untrackedFiles = ParseUntrackedPaths(statusStdOut)
+            .Where(IsMaacoManagedPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var cleanedFiles = Array.Empty<string>();
+        if (untrackedFiles.Length > 0)
+        {
+            var quotedUntracked = string.Join(" ", untrackedFiles.Select(QuoteGitPath));
+            var (cleanExitCode, _, cleanStdErr) = await RunProcessAsync(
+                "git",
+                $"clean -f -- {quotedUntracked}",
+                workingDirectory,
+                cancellationToken);
+
+            if (cleanExitCode != 0)
+            {
+                return Fail(
+                    $"Git command failed: clean -f. {Truncate(cleanStdErr, 20000)}",
+                    request.CorrelationId,
+                    startedAt);
+            }
+
+            cleanedFiles = untrackedFiles;
+        }
+
+        var output = JsonSerializer.Serialize(new
+        {
+            command = $"git restore --staged --worktree -- {quotedFiles}",
+            operation = "rollback-uncommitted",
+            exitCode = restoreExitCode,
+            stdout = Truncate(restoreStdOut, 20000),
+            stderr = Truncate(restoreStdErr, 20000),
+            restoredFiles = maacoFiles,
+            cleanedFiles
+        });
+
+        return new ToolResult(
+            Succeeded: true,
+            Output: output,
+            Error: null,
+            Duration: DateTimeOffset.UtcNow - startedAt,
+            CorrelationId: request.CorrelationId);
+    }
+
     private static async Task<(int ExitCode, string StdOut, string StdErr)> RunProcessAsync(
         string fileName,
         string arguments,
@@ -169,6 +295,56 @@ public sealed class GitTool : IAgentTool
         var stdErrTask = process.StandardError.ReadToEndAsync(cancellationToken);
         await process.WaitForExitAsync(cancellationToken);
         return (process.ExitCode, await stdOutTask, await stdErrTask);
+    }
+
+    private static IReadOnlyList<string> ParseStatusPaths(string porcelain)
+    {
+        var paths = new List<string>();
+        var lines = porcelain.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            if (line.Length < 4)
+            {
+                continue;
+            }
+
+            var pathSection = line[3..].Trim();
+            var renameParts = pathSection.Split(" -> ", StringSplitOptions.None);
+            var candidate = renameParts.Length > 1 ? renameParts[^1] : pathSection;
+            if (!string.IsNullOrWhiteSpace(candidate))
+            {
+                paths.Add(candidate.Trim());
+            }
+        }
+
+        return paths;
+    }
+
+    private static IReadOnlyList<string> ParseUntrackedPaths(string porcelain)
+    {
+        var paths = new List<string>();
+        var lines = porcelain.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            if (!line.StartsWith("?? ", StringComparison.Ordinal) || line.Length < 4)
+            {
+                continue;
+            }
+
+            paths.Add(line[3..].Trim());
+        }
+
+        return paths;
+    }
+
+    private static string QuoteGitPath(string path) =>
+        $"\"{path.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+
+    private static bool IsMaacoManagedPath(string relativePath)
+    {
+        var normalized = relativePath.Replace('\\', '/');
+        return normalized.Contains("maaco", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith(".maaco/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Truncate(string value, int max) =>

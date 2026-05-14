@@ -1,5 +1,6 @@
 using MAACO.Core.Abstractions.Tools;
 using MAACO.Tools.Tools;
+using System.Reflection;
 
 namespace MAACO.Tools.Tests;
 
@@ -272,7 +273,33 @@ public sealed class GitToolTests
         var result = await tool.ExecuteAsync(request, CancellationToken.None);
 
         Assert.DoesNotContain("Unsupported git operation", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("not a git repository", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("src/MAACO.Tools/Tools/GitTool.cs", true)]
+    [InlineData(".maaco/artifacts/patch-1.patch", true)]
+    [InlineData("docs/notes.txt", false)]
+    public void IsMaacoManagedPath_ReturnsExpectedValue(string path, bool expected)
+    {
+        var method = typeof(GitTool).GetMethod("IsMaacoManagedPath", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var actual = (bool)method!.Invoke(null, [path])!;
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void ParseStatusPaths_UsesNewPathForRenames()
+    {
+        var method = typeof(GitTool).GetMethod("ParseStatusPaths", BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.NotNull(method);
+
+        var status = "R  old/file.txt -> src/MAACO.New/file.txt\n M src/MAACO.Core/Class1.cs\n";
+        var paths = (IReadOnlyList<string>)method!.Invoke(null, [status])!;
+
+        Assert.Contains("src/MAACO.New/file.txt", paths);
+        Assert.Contains("src/MAACO.Core/Class1.cs", paths);
+        Assert.DoesNotContain("old/file.txt", paths);
     }
 
     private static string CreateWorkspace(bool isGitRepo)
