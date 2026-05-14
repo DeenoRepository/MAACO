@@ -16,18 +16,45 @@ public sealed class RealtimeEventBusIntegrationTests
     [Fact]
     public async Task EventBus_TestClientHandler_ReceivesWorkflowStartedEvent()
     {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
         var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
         services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
         services.AddSingleton<TestWorkflowStartedClientHandler>();
         services.AddSingleton<IEventHandler<WorkflowStartedEvent>>(sp => sp.GetRequiredService<TestWorkflowStartedClientHandler>());
 
         await using var provider = services.BuildServiceProvider();
+
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
         provider.UseMaacoInfrastructure();
 
         var bus = provider.GetRequiredService<IEventBus>();
         var client = provider.GetRequiredService<TestWorkflowStartedClientHandler>();
 
-        var workflowId = Guid.NewGuid();
+        Guid workflowId;
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = new Workflow
+            {
+                TaskId = Guid.NewGuid(),
+                Status = WorkflowStatus.Created
+            };
+
+            await db.Workflows.AddAsync(workflow);
+            await db.SaveChangesAsync();
+            workflowId = workflow.Id;
+        }
+
         await bus.PublishAsync(new WorkflowStartedEvent(workflowId, Guid.NewGuid(), DateTimeOffset.UtcNow, "corr-test"), CancellationToken.None);
 
         Assert.True(client.Received);
@@ -88,11 +115,71 @@ public sealed class RealtimeEventBusIntegrationTests
         {
             var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
             var workflow = await db.Workflows.SingleAsync(x => x.Id == persistedWorkflowId);
-            var log = await db.LogEvents.OrderByDescending(x => x.CreatedAt).FirstOrDefaultAsync(x => x.WorkflowId == persistedWorkflowId);
+            var log = (await db.LogEvents
+                    .Where(x => x.WorkflowId == persistedWorkflowId)
+                    .ToListAsync())
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefault();
 
             Assert.Equal(WorkflowStatus.Running, workflow.Status);
             Assert.NotNull(log);
             Assert.Equal(correlationId, log!.CorrelationId);
+        }
+    }
+
+    [Fact]
+    public async Task WorkflowCompletedEvent_ThrowsAndDoesNotUpdateStatus_ForInvalidTransition()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+
+            var workflow = new Workflow
+            {
+                TaskId = Guid.NewGuid(),
+                Status = WorkflowStatus.Created
+            };
+
+            await db.Workflows.AddAsync(workflow);
+            await db.SaveChangesAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        var bus = provider.GetRequiredService<IEventBus>();
+
+        Guid persistedWorkflowId;
+        await using (var scope = provider.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            persistedWorkflowId = await db.Workflows.Select(x => x.Id).SingleAsync();
+        }
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            bus.PublishAsync(
+                new WorkflowCompletedEvent(
+                    persistedWorkflowId,
+                    DateTimeOffset.UtcNow,
+                    "corr-invalid-transition"),
+                CancellationToken.None));
+
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = await db.Workflows.SingleAsync(x => x.Id == persistedWorkflowId);
+            Assert.Equal(WorkflowStatus.Created, workflow.Status);
         }
     }
 

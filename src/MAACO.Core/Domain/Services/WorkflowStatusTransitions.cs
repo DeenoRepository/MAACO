@@ -7,7 +7,7 @@ public static class WorkflowStatusTransitions
     private static readonly IReadOnlyDictionary<WorkflowStatus, HashSet<WorkflowStatus>> AllowedTransitions =
         new Dictionary<WorkflowStatus, HashSet<WorkflowStatus>>
         {
-            [WorkflowStatus.Created] = new() { WorkflowStatus.Planned, WorkflowStatus.Cancelled },
+            [WorkflowStatus.Created] = new() { WorkflowStatus.Planned, WorkflowStatus.Running, WorkflowStatus.Cancelled },
             [WorkflowStatus.Planned] = new() { WorkflowStatus.Queued, WorkflowStatus.Cancelled },
             [WorkflowStatus.Queued] = new() { WorkflowStatus.Running, WorkflowStatus.Cancelled },
             [WorkflowStatus.Running] = new()

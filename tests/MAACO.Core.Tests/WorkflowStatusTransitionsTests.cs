@@ -7,6 +7,7 @@ public sealed class WorkflowStatusTransitionsTests
 {
     [Theory]
     [InlineData(WorkflowStatus.Created, WorkflowStatus.Planned)]
+    [InlineData(WorkflowStatus.Created, WorkflowStatus.Running)]
     [InlineData(WorkflowStatus.Planned, WorkflowStatus.Queued)]
     [InlineData(WorkflowStatus.Queued, WorkflowStatus.Running)]
     [InlineData(WorkflowStatus.Running, WorkflowStatus.WaitingForApproval)]

@@ -2,6 +2,7 @@ using MAACO.Core.Abstractions.Events;
 using MAACO.Core.Abstractions.Repositories;
 using MAACO.Core.Domain.Enums;
 using MAACO.Core.Domain.Events;
+using MAACO.Core.Domain.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MAACO.Infrastructure.Events.Handlers;
@@ -46,7 +47,7 @@ internal static class WorkflowStatusProjectionHelpers
             return;
         }
 
-        workflow.Status = status;
+        workflow.Status = WorkflowStatusTransitions.EnsureCanTransition(workflow.Status, status);
         workflow.UpdatedAt = DateTimeOffset.UtcNow;
         await workflowRepository.SaveChangesAsync(cancellationToken);
     }
