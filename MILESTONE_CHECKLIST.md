@@ -764,10 +764,10 @@ User Task
 
 ## Debug cycle
 
-- [ ] Сформировать debug prompt
-- [ ] Получить patch
-- [ ] Validate patch
-- [ ] Apply patch
+- [x] Сформировать debug prompt
+- [x] Получить patch
+- [x] Validate patch
+- [x] Apply patch
 - [ ] Повторить build/test
 - [ ] Остановиться при success/max retries
 

@@ -1,4 +1,5 @@
 using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Abstractions.Tools;
 using MAACO.Core.Abstractions.Events;
 using MAACO.Core.Abstractions.Workflows;
 using MAACO.Core.Domain.Entities;
@@ -10,6 +11,7 @@ using MAACO.Persistence.Data;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace MAACO.Core.Tests;
 
@@ -708,6 +710,96 @@ public sealed class WorkflowOrchestratorIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task ExecuteAsync_DebugAndPatchSteps_ApplyPatchFromPreparedDebugCandidate()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var workspacePath = Path.Combine(Path.GetTempPath(), $"maaco-debug-patch-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(workspacePath);
+        var targetFilePath = Path.Combine(workspacePath, "sample.txt");
+        await File.WriteAllTextAsync(targetFilePath, "before", CancellationToken.None);
+
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddMaacoPersistence("Data Source=:memory:");
+            services.AddMaacoInfrastructure();
+            services.AddSingleton<IToolRegistry, FakePatchToolRegistry>();
+            services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+            services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+            await using var provider = services.BuildServiceProvider();
+            await using (var initScope = provider.CreateAsyncScope())
+            {
+                var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                await db.Database.EnsureCreatedAsync();
+            }
+
+            provider.UseMaacoInfrastructure();
+            Guid workflowId;
+            Guid taskId;
+
+            await using (var runScope = provider.CreateAsyncScope())
+            {
+                var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                var project = new Project { Name = "debug-patch-project", RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(workspacePath) };
+                await db.Projects.AddAsync(project);
+                await db.SaveChangesAsync();
+                var task = new TaskItem { ProjectId = project.Id, Title = "debug-patch-task" };
+                await db.TaskItems.AddAsync(task);
+                await db.SaveChangesAsync();
+                taskId = task.Id;
+
+                var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+                var workflow = new Workflow { TaskId = taskId, Status = WorkflowStatus.Created };
+                await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+                await workflowRepository.SaveChangesAsync(CancellationToken.None);
+                workflowId = workflow.Id;
+
+                var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+                await orchestrator.ExecuteAsync(
+                    new WorkflowExecutionContext(
+                        Guid.NewGuid(),
+                        taskId,
+                        workflowId,
+                        "debug-patch",
+                        "corr-debug-patch",
+                        new Dictionary<string, string>
+                        {
+                            ["WorkspacePath"] = workspacePath,
+                            ["DebugPatchTargetPath"] = "sample.txt",
+                            ["DebugPatchOldText"] = "before",
+                            ["DebugPatchNewText"] = "after"
+                        }),
+                    ["DebugStep", "PatchApplicationStep"],
+                    CancellationToken.None);
+            }
+
+            await using (var verifyScope = provider.CreateAsyncScope())
+            {
+                var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                var artifacts = await db.Artifacts.Where(x => x.TaskId == taskId && x.Type == ArtifactType.Patch).ToListAsync();
+                var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+                Assert.NotEmpty(artifacts);
+                Assert.Contains(logs, x => x.Message.Contains("PatchPrepared=True", StringComparison.Ordinal));
+                Assert.Contains(logs, x => x.Message.Contains("PatchApplied=True", StringComparison.Ordinal));
+            }
+
+            var fileContent = await File.ReadAllTextAsync(targetFilePath, CancellationToken.None);
+            Assert.Equal("after", fileContent);
+        }
+        finally
+        {
+            if (Directory.Exists(workspacePath))
+            {
+                Directory.Delete(workspacePath, recursive: true);
+            }
+        }
+    }
+
     private sealed class StepEventCollector :
         IEventHandler<WorkflowStepStartedEvent>,
         IEventHandler<WorkflowStepCompletedEvent>
@@ -741,6 +833,41 @@ public sealed class WorkflowOrchestratorIntegrationTests
             }
 
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePatchToolRegistry : IToolRegistry
+    {
+        public IReadOnlyCollection<string> ListToolNames() => ["CodePatchTool"];
+
+        public async Task<ToolResult> ExecuteAsync(ToolRequest request, CancellationToken cancellationToken)
+        {
+            if (!string.Equals(request.ToolName, "CodePatchTool", StringComparison.Ordinal))
+            {
+                return new ToolResult(false, string.Empty, "Unsupported tool.", TimeSpan.Zero, CorrelationId: request.CorrelationId);
+            }
+
+            using var document = JsonDocument.Parse(request.Input);
+            var root = document.RootElement;
+            var targetPath = root.GetProperty("TargetPath").GetString() ?? string.Empty;
+            var oldText = root.GetProperty("OldText").GetString() ?? string.Empty;
+            var newText = root.GetProperty("NewText").GetString() ?? string.Empty;
+
+            var fullPath = Path.GetFullPath(Path.Combine(request.WorkspacePath, targetPath));
+            if (!File.Exists(fullPath))
+            {
+                return new ToolResult(false, string.Empty, "Target file does not exist.", TimeSpan.Zero, CorrelationId: request.CorrelationId);
+            }
+
+            var content = await File.ReadAllTextAsync(fullPath, cancellationToken);
+            if (!content.Contains(oldText, StringComparison.Ordinal))
+            {
+                return new ToolResult(false, string.Empty, "Old text not found.", TimeSpan.Zero, CorrelationId: request.CorrelationId);
+            }
+
+            var updated = content.Replace(oldText, newText, StringComparison.Ordinal);
+            await File.WriteAllTextAsync(fullPath, updated, cancellationToken);
+            return new ToolResult(true, "{\"applied\":true}", null, TimeSpan.Zero, CorrelationId: request.CorrelationId);
         }
     }
 }
