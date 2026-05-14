@@ -240,9 +240,9 @@ tests/
 
 ## Endpoints Approvals
 
-- [ ] `GET /api/approvals/pending`
-- [ ] `POST /api/approvals/{id}/approve`
-- [ ] `POST /api/approvals/{id}/reject`
+- [x] `GET /api/approvals/pending`
+- [x] `POST /api/approvals/{id}/approve`
+- [x] `POST /api/approvals/{id}/reject`
 
 ## Endpoints Git/Diff
 
@@ -1257,6 +1257,7 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
+
 
 
 
