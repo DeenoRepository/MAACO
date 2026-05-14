@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MAACO.Agents\MAACO.Agents.csproj" />
+    <ProjectReference Include="..\..\src\MAACO.Infrastructure\MAACO.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

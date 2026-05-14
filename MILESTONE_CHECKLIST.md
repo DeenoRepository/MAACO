@@ -607,10 +607,10 @@ tests/
 
 ### Acceptance Criteria
 
-- [ ] Agent registry работает
-- [ ] Agents вызываются через runtime
-- [ ] Fake LLM позволяет прогнать demo workflow
-- [ ] Agent outputs сохраняются как artifacts/logs
+- [x] Agent registry работает
+- [x] Agents вызываются через runtime
+- [x] Fake LLM позволяет прогнать demo workflow
+- [x] Agent outputs сохраняются как artifacts/logs
 
 ---
 

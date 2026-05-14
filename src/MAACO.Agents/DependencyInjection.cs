@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddSingleton<IAgent, DocumentationAgent>();
         services.AddSingleton<IAgentRegistry, AgentRegistry>();
         services.AddScoped<IAgentExecutionService, AgentExecutionService>();
+        services.AddScoped<IAgentDemoWorkflowService, AgentDemoWorkflowService>();
         return services;
     }
 }

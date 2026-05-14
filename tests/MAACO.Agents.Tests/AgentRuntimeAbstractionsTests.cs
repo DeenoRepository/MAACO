@@ -2,7 +2,11 @@ using MAACO.Agents.Abstractions;
 using MAACO.Agents.Agents;
 using MAACO.Agents.Prompts;
 using MAACO.Core.Abstractions.Tools;
+using MAACO.Core.Abstractions.Llm;
+using MAACO.Core.Abstractions.Repositories;
+using MAACO.Core.Domain.Entities;
 using MAACO.Agents.Services;
+using MAACO.Infrastructure.Llm;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MAACO.Agents.Tests;
@@ -159,6 +163,58 @@ public sealed class AgentRuntimeAbstractionsTests
     }
 
     [Fact]
+    public async Task AgentExecutionService_PersistsAgentOutputs_AsLogsAndArtifacts()
+    {
+        var logs = new InMemoryLogRepository();
+        var artifacts = new InMemoryArtifactRepository();
+        var agent = new FakeAgent("DocumentationAgent");
+        var registry = new AgentRegistry([agent]);
+        var service = new AgentExecutionService(registry, logs, artifacts);
+        var context = new AgentContext(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "document");
+
+        var result = await service.ExecuteAsync("DocumentationAgent", context, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Single(logs.Items);
+        Assert.Single(artifacts.Items);
+        Assert.Equal(context.TaskId, artifacts.Items[0].TaskId);
+    }
+
+    [Fact]
+    public async Task AgentDemoWorkflowService_RunsWithFakeLlmProvider()
+    {
+        var llmGateway = new LlmGateway(
+            providers: [new FakeLlmProvider()],
+            providerOptions: new LlmProviderOptions("Fake", "fake-default"),
+            routingPolicy: new ModelRoutingPolicy(
+                PlanningModel: "fake-default",
+                CodingModel: "fake-default",
+                DebuggingModel: "fake-default",
+                SummaryModel: "fake-default",
+                FallbackModel: "fake-default"));
+
+        var planner = new TaskPlannerAgent([], new DefaultAgentPromptCatalog());
+        var registry = new AgentRegistry([planner]);
+        var execution = new AgentExecutionService(registry);
+        var demo = new AgentDemoWorkflowService(llmGateway, execution);
+        var context = new AgentContext(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Plan demo workflow");
+
+        var result = await demo.RunAsync(context, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Metadata);
+        Assert.Equal("Fake", result.Metadata!["demoLlmProvider"]);
+    }
+
+    [Fact]
     public async Task AgentStub_ExecutesDelegatedTool_WhenRequested()
     {
         var tool = new FakeTool("DemoTool");
@@ -215,5 +271,37 @@ public sealed class AgentRuntimeAbstractionsTests
                 Duration: TimeSpan.FromMilliseconds(1),
                 CorrelationId: request.CorrelationId));
         }
+    }
+
+    private sealed class InMemoryLogRepository : ILogRepository
+    {
+        public List<LogEvent> Items { get; } = [];
+
+        public Task AddAsync(LogEvent logEvent, CancellationToken cancellationToken)
+        {
+            Items.Add(logEvent);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<LogEvent>> ListByWorkflowIdAsync(Guid workflowId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<LogEvent>>(Items.Where(x => x.WorkflowId == workflowId).ToList());
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class InMemoryArtifactRepository : IArtifactRepository
+    {
+        public List<Artifact> Items { get; } = [];
+
+        public Task AddAsync(Artifact artifact, CancellationToken cancellationToken)
+        {
+            Items.Add(artifact);
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<Artifact>> ListByTaskIdAsync(Guid taskId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<Artifact>>(Items.Where(x => x.TaskId == taskId).ToList());
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
