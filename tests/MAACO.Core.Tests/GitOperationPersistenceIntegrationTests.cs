@@ -78,11 +78,12 @@ public sealed class GitOperationPersistenceIntegrationTests
 
     private static void RunGit(string workingDirectory, string arguments)
     {
+        var gitExecutable = ResolveGitExecutablePath();
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "git",
+                FileName = gitExecutable,
                 Arguments = arguments,
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
@@ -101,5 +102,27 @@ public sealed class GitOperationPersistenceIntegrationTests
         {
             throw new InvalidOperationException($"git {arguments} failed. {stderr}");
         }
+    }
+
+    private static string ResolveGitExecutablePath()
+    {
+        var candidates = new[]
+        {
+            @"C:\Program Files\Git\cmd\git.exe",
+            @"C:\Program Files\Git\bin\git.exe",
+            @"C:\Program Files (x86)\Git\cmd\git.exe",
+            @"C:\Program Files (x86)\Git\bin\git.exe",
+            "git"
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (string.Equals(candidate, "git", StringComparison.Ordinal) || File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return "git";
     }
 }

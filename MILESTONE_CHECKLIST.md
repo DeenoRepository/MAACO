@@ -950,29 +950,29 @@ User Task
 
 ## UI settings
 
-- [ ] Provider selection
-- [ ] OpenAI-compatible base URL
-- [ ] API key input
-- [ ] OpenAI-compatible model
-- [ ] Ollama base URL
-- [ ] Ollama model
-- [ ] Default build timeout
-- [ ] Max debug retries
-- [ ] Approval mode default
+- [x] Provider selection
+- [x] OpenAI-compatible base URL
+- [x] API key input
+- [x] OpenAI-compatible model
+- [x] Ollama base URL
+- [x] Ollama model
+- [x] Default build timeout
+- [x] Max debug retries
+- [x] Approval mode default
 
 ## Security
 
-- [ ] API key не показывать полностью
-- [ ] API key redaction
-- [ ] Test connection button
-- [ ] Не логировать secrets
+- [x] API key не показывать полностью
+- [x] API key redaction
+- [x] Test connection button
+- [x] Не логировать secrets
 
 ### Acceptance Criteria
 
-- [ ] Пользователь настраивает provider
-- [ ] Настройки сохраняются
-- [ ] Fake provider доступен всегда
-- [ ] Secrets не видны в logs
+- [x] Пользователь настраивает provider
+- [x] Настройки сохраняются
+- [x] Fake provider доступен всегда
+- [x] Secrets не видны в logs
 
 ---
 
@@ -985,45 +985,45 @@ User Task
 
 ## Filesystem security
 
-- [ ] Path traversal protection
-- [ ] Workspace allowlist
-- [ ] Запрет доступа вне repo
-- [ ] Запрет системных директорий
-- [ ] Запрет чтения `.ssh`
-- [ ] Запрет чтения `.aws`
-- [ ] Controlled access to `.env`
+- [x] Path traversal protection
+- [x] Workspace allowlist
+- [x] Запрет доступа вне repo
+- [x] Запрет системных директорий
+- [x] Запрет чтения `.ssh`
+- [x] Запрет чтения `.aws`
+- [x] Controlled access to `.env`
 
 ## Prompt security
 
-- [ ] Secret redaction before LLM
-- [ ] Prompt injection warning detection
-- [ ] Ignore untrusted repo instructions by default
-- [ ] Mark external docs as untrusted
-- [ ] Log model decisions
+- [x] Secret redaction before LLM
+- [x] Prompt injection warning detection
+- [x] Ignore untrusted repo instructions by default
+- [x] Mark external docs as untrusted
+- [x] Log model decisions
 
 ## Command security
 
-- [ ] Dangerous command blocklist
-- [ ] Command allowlist
-- [ ] Timeout all commands
-- [ ] Max output size
-- [ ] No auto push
-- [ ] No auto deploy
+- [x] Dangerous command blocklist
+- [x] Command allowlist
+- [x] Timeout all commands
+- [x] Max output size
+- [x] No auto push
+- [x] No auto deploy
 
 ## Audit
 
-- [ ] Audit all file writes
-- [ ] Audit all command executions
-- [ ] Audit all git operations
-- [ ] Audit all approval decisions
-- [ ] Audit all LLM calls
+- [x] Audit all file writes
+- [x] Audit all command executions
+- [x] Audit all git operations
+- [x] Audit all approval decisions
+- [x] Audit all LLM calls
 
 ### Acceptance Criteria
 
-- [ ] Unsafe commands blocked
-- [ ] Secrets redacted
-- [ ] File access outside repo blocked
-- [ ] Audit trail complete
+- [x] Unsafe commands blocked
+- [x] Secrets redacted
+- [x] File access outside repo blocked
+- [x] Audit trail complete
 
 ---
 
@@ -1036,11 +1036,11 @@ User Task
 
 ## Checkpoints
 
-- [ ] Checkpoint после каждого workflow step
-- [ ] Save step inputs
-- [ ] Save step outputs
-- [ ] Save artifacts
-- [ ] Save errors
+- [x] Checkpoint после каждого workflow step
+- [x] Save step inputs
+- [x] Save step outputs
+- [x] Save artifacts
+- [x] Save errors
 
 ## Recovery
 
@@ -1257,10 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
-
-
-
 
 
 

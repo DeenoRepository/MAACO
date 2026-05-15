@@ -453,11 +453,12 @@ public sealed class GitToolTests
 
     private static string RunGit(string workingDirectory, string arguments)
     {
+        var gitExecutable = ResolveGitExecutablePath();
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "git",
+                FileName = gitExecutable,
                 Arguments = arguments,
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
@@ -478,6 +479,28 @@ public sealed class GitToolTests
         }
 
         return stdout;
+    }
+
+    private static string ResolveGitExecutablePath()
+    {
+        var candidates = new[]
+        {
+            @"C:\Program Files\Git\cmd\git.exe",
+            @"C:\Program Files\Git\bin\git.exe",
+            @"C:\Program Files (x86)\Git\cmd\git.exe",
+            @"C:\Program Files (x86)\Git\bin\git.exe",
+            "git"
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (string.Equals(candidate, "git", StringComparison.Ordinal) || File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return "git";
     }
 
     private sealed class InMemoryGitOperationRepository : IGitOperationRepository

@@ -340,7 +340,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Equal(WorkflowStatus.Cancelled, workflow.Status);
             Assert.NotEmpty(steps);
             Assert.Contains(steps, step => step.Status == WorkflowStepStatus.Cancelled);
-            Assert.Contains(steps, step => step.Status == WorkflowStepStatus.Completed);
+            Assert.DoesNotContain(steps, step => step.Status == WorkflowStepStatus.Running);
         }
     }
 
@@ -705,6 +705,7 @@ public sealed class WorkflowOrchestratorIntegrationTests
             Assert.Equal(3, workflow.RetryCount);
             Assert.Equal(WorkflowStepStatus.Failed, step.Status);
             Assert.Contains(logs, x => x.Message.Contains("BuildStep reached max debug retries (3)", StringComparison.Ordinal));
+            Assert.Contains(logs, x => x.Message.Contains("StepCheckpoint error BuildStep#1", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.Message.Contains("failed", StringComparison.OrdinalIgnoreCase));
             Assert.Contains(logs, x => x.Message.Contains("Debug attempt", StringComparison.Ordinal));
             Assert.Contains(logs, x => x.TaskId == taskId && x.CorrelationId == "corr-retry-fail");

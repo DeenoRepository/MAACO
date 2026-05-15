@@ -10,6 +10,7 @@ namespace MAACO.Tools.Tools;
 
 public sealed class GitTool(IGitOperationRepository? gitOperationRepository = null) : IAgentTool
 {
+    private static readonly string GitExecutable = ResolveGitExecutable();
     private static readonly Regex BranchNameRegex = new(
         "^[a-zA-Z0-9._/-]+$",
         RegexOptions.Compiled);
@@ -79,7 +80,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
             }
 
             var (exitCode, stdOut, stdErr) = await RunProcessAsync(
-                "git",
+                GitExecutable,
                 operation.Command,
                 workingDirectory,
                 cancellationToken);
@@ -254,7 +255,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         }
 
         var (exitCode, stdOut, stdErr) = await RunProcessAsync(
-            "git",
+            GitExecutable,
             $"checkout -b {branchName}",
             workingDirectory,
             cancellationToken);
@@ -286,7 +287,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         {
             var candidate = i == 0 ? baseName : $"{baseName}-{i + 1}";
             var (exitCode, stdOut, _) = await RunProcessAsync(
-                "git",
+                GitExecutable,
                 $"branch --list {candidate}",
                 workingDirectory,
                 cancellationToken);
@@ -380,7 +381,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         CancellationToken cancellationToken)
     {
         var (statusExitCode, statusStdOut, statusStdErr) = await RunProcessAsync(
-            "git",
+            GitExecutable,
             "status --porcelain --untracked-files=all",
             workingDirectory,
             cancellationToken);
@@ -432,7 +433,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         var quotedFiles = string.Join(" ", maacoFiles.Select(QuoteGitPath));
 
         var (restoreExitCode, restoreStdOut, restoreStdErr) = await RunProcessAsync(
-            "git",
+            GitExecutable,
             $"restore --staged --worktree -- {quotedFiles}",
             workingDirectory,
             cancellationToken);
@@ -455,7 +456,7 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
         {
             var quotedUntracked = string.Join(" ", untrackedFiles.Select(QuoteGitPath));
             var (cleanExitCode, _, cleanStdErr) = await RunProcessAsync(
-                "git",
+                GitExecutable,
                 $"clean -f -- {quotedUntracked}",
                 workingDirectory,
                 cancellationToken);
@@ -574,6 +575,28 @@ public sealed class GitTool(IGitOperationRepository? gitOperationRepository = nu
     {
         var gitPath = Path.Combine(workingDirectory, ".git");
         return Directory.Exists(gitPath) || File.Exists(gitPath);
+    }
+
+    private static string ResolveGitExecutable()
+    {
+        var candidates = new[]
+        {
+            @"C:\Program Files\Git\cmd\git.exe",
+            @"C:\Program Files\Git\bin\git.exe",
+            @"C:\Program Files (x86)\Git\cmd\git.exe",
+            @"C:\Program Files (x86)\Git\bin\git.exe",
+            "git"
+        };
+
+        foreach (var candidate in candidates)
+        {
+            if (string.Equals(candidate, "git", StringComparison.Ordinal) || File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return "git";
     }
 
     private static string SavePatchArtifact(string workingDirectory, string patchContent)

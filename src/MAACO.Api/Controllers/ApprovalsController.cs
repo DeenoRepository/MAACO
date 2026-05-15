@@ -8,7 +8,7 @@ namespace MAACO.Api.Controllers;
 
 [ApiController]
 [Route("api/approvals")]
-public sealed class ApprovalsController(IApprovalRepository approvalRepository) : ControllerBase
+public sealed class ApprovalsController(IApprovalRepository approvalRepository, ILogRepository logRepository) : ControllerBase
 {
     [HttpGet("pending")]
     [ProducesResponseType(typeof(IReadOnlyList<ApprovalDto>), StatusCodes.Status200OK)]
@@ -32,6 +32,7 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
         approval.Status = ApprovalStatus.Approved;
         approval.UpdatedAt = DateTimeOffset.UtcNow;
         await approvalRepository.SaveChangesAsync(cancellationToken);
+        await PersistApprovalDecisionAuditAsync(approval, cancellationToken);
 
         return Ok(Map(approval));
     }
@@ -50,8 +51,25 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
         approval.Status = ApprovalStatus.Rejected;
         approval.UpdatedAt = DateTimeOffset.UtcNow;
         await approvalRepository.SaveChangesAsync(cancellationToken);
+        await PersistApprovalDecisionAuditAsync(approval, cancellationToken);
 
         return Ok(Map(approval));
+    }
+
+    private async Task PersistApprovalDecisionAuditAsync(ApprovalRequest approval, CancellationToken cancellationToken)
+    {
+        var auditEvent = new LogEvent
+        {
+            WorkflowId = approval.WorkflowId,
+            Severity = LogSeverity.Information,
+            Message = $"Approval decision: {approval.Status} (ApprovalId={approval.Id})",
+            CorrelationId = HttpContext.TraceIdentifier,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        await logRepository.AddAsync(auditEvent, cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
     }
 
     private static ApprovalDto Map(ApprovalRequest approval) =>
@@ -66,4 +84,3 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository) 
             approval.UpdatedAt,
             approval.Version);
 }
-

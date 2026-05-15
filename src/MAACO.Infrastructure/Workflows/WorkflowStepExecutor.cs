@@ -4,6 +4,7 @@ using MAACO.Core.Abstractions.Workflows;
 using MAACO.Core.Domain.Entities;
 using MAACO.Core.Domain.Enums;
 using MAACO.Core.Domain.Events;
+using System.Text.Json;
 
 namespace MAACO.Infrastructure.Workflows;
 
@@ -15,6 +16,7 @@ public sealed class WorkflowStepExecutor(
     IEventBus eventBus)
 {
     private const int DefaultMaxDebugRetries = 3;
+    private const int MaxCheckpointPayloadLength = 2000;
     private readonly IReadOnlyDictionary<string, IWorkflowStepHandler> handlers =
         stepHandlers.ToDictionary(x => x.Name, StringComparer.OrdinalIgnoreCase);
 
@@ -41,6 +43,8 @@ public sealed class WorkflowStepExecutor(
 
             try
             {
+                await PersistStepInputCheckpointAsync(context, step, cancellationToken);
+
                 if (handlers.TryGetValue(step.Name, out var handler))
                 {
                     await handler.ExecuteAsync(context, step, cancellationToken);
@@ -64,6 +68,7 @@ public sealed class WorkflowStepExecutor(
                 var succeeded = await ExecuteDebugLoopAsync(context, step, maxRetries, ex.Message, cancellationToken);
                 if (!succeeded)
                 {
+                    await PersistStepErrorCheckpointAsync(context, step, $"Failed after {maxRetries} debug retries. Root reason: {ex}", cancellationToken);
                     step.Status = WorkflowStepStatus.Failed;
                     await workflowRepository.SaveChangesAsync(cancellationToken);
 
@@ -80,6 +85,7 @@ public sealed class WorkflowStepExecutor(
             }
             catch (Exception ex)
             {
+                await PersistStepErrorCheckpointAsync(context, step, ex.ToString(), cancellationToken);
                 step.Status = WorkflowStepStatus.Failed;
                 await workflowRepository.SaveChangesAsync(cancellationToken);
 
@@ -96,6 +102,7 @@ public sealed class WorkflowStepExecutor(
 
             step.Status = WorkflowStepStatus.Completed;
             await workflowRepository.SaveChangesAsync(cancellationToken);
+            await PersistStepOutputCheckpointAsync(context, step, cancellationToken);
 
             await artifactRepository.AddAsync(
                 new Artifact
@@ -284,6 +291,80 @@ public sealed class WorkflowStepExecutor(
         }
 
         return DefaultMaxDebugRetries;
+    }
+
+    private async Task PersistStepInputCheckpointAsync(
+        WorkflowExecutionContext context,
+        WorkflowStep step,
+        CancellationToken cancellationToken)
+    {
+        var payload = context.Inputs is null
+            ? "{}"
+            : JsonSerializer.Serialize(context.Inputs);
+
+        await PersistStepCheckpointLogAsync(
+            context,
+            step,
+            "input",
+            payload,
+            cancellationToken);
+    }
+
+    private async Task PersistStepOutputCheckpointAsync(
+        WorkflowExecutionContext context,
+        WorkflowStep step,
+        CancellationToken cancellationToken)
+    {
+        var payload = JsonSerializer.Serialize(new
+        {
+            step.Name,
+            StepOrder = step.Order,
+            Status = step.Status.ToString(),
+            CompletedAtUtc = DateTimeOffset.UtcNow
+        });
+
+        await PersistStepCheckpointLogAsync(
+            context,
+            step,
+            "output",
+            payload,
+            cancellationToken);
+    }
+
+    private async Task PersistStepErrorCheckpointAsync(
+        WorkflowExecutionContext context,
+        WorkflowStep step,
+        string errorPayload,
+        CancellationToken cancellationToken) =>
+        await PersistStepCheckpointLogAsync(
+            context,
+            step,
+            "error",
+            errorPayload,
+            cancellationToken);
+
+    private async Task PersistStepCheckpointLogAsync(
+        WorkflowExecutionContext context,
+        WorkflowStep step,
+        string checkpointType,
+        string payload,
+        CancellationToken cancellationToken)
+    {
+        var normalizedPayload = payload.Length <= MaxCheckpointPayloadLength
+            ? payload
+            : $"{payload[..MaxCheckpointPayloadLength]}...(truncated)";
+
+        await logRepository.AddAsync(
+            new LogEvent
+            {
+                WorkflowId = context.WorkflowId,
+                TaskId = context.TaskId,
+                Severity = LogSeverity.Information,
+                CorrelationId = context.CorrelationId,
+                Message = $"StepCheckpoint {checkpointType} {step.Name}#{step.Order}: {normalizedPayload}"
+            },
+            cancellationToken);
+        await logRepository.SaveChangesAsync(cancellationToken);
     }
 }
 

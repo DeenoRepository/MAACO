@@ -10,34 +10,31 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - Completed: `Milestone 3 (Backend API Skeleton)`
 - Completed: `Milestone 4 (Realtime Event Bus + SignalR)`
 - Completed: `Milestone 5 (Project Scanner)`
-- In progress: `Milestone 6 (Tooling Core)`
-- M6 progress: tool abstractions and registry foundation added (`IAgentTool`, `ToolRequest/ToolResult`, `ToolPermission`, `ToolRegistry`, DI, logging, timeout/cancellation)
-- M6 progress: FileSystemTool and ProjectScannerTool added with permission checks, workspace boundary, capped output and normalized errors
-- M6 progress: BuildTool and TestTool added (dotnet build/test execution with structured output, timeout/cancellation)
-- M6 progress: GitTool and DiffTool added (safe read-only git status/branch/log and diff output)
-- M5 progress: repository path validation added (exists/readable/.git, restricted dirs block, normalized path)
-- M5 progress: file scanner added with ignore rules and limits (size/count), integrated into `POST /api/projects/{id}/scan`
-- M5 progress: stack detection added (.NET/Node.js/Python/Generic) with solution/project/manifests discovery
-- M5 progress: build/test command detection added (.NET `dotnet build/test`, Node `npm test`, Python `pytest`) + settings override
-- M5 progress: context snapshot persistence added (`ProjectContextSnapshot`, key files, stack, commands, summary)
-- M5 acceptance: local repo scan and stack/commands detection completed
-- M4 progress: added `IEventBus` and in-memory event bus with DI registration
-- M4 progress: added event handlers with `LogEvent` persistence, `workflowId`, and `correlationId` support
-- M4 progress: added SignalR WorkflowHub (`/workflowHub`), workflow/project groups, and realtime event publishers
-- M4 progress: added workflow status projection handlers from events (`Running`, `WaitingForApproval`, `Completed`, `Failed`)
-- M4 acceptance: realtime client receive path validated via SignalR handler unit test
-- M2 progress: `DbContext`, `DbSet<>`, mappings, indexes, and repository interfaces/implementations added
-- M2 progress: `InitialCreate` migration added and applied, auto-migrate + seed on API startup enabled
-- M3 progress: API skeleton wired (DI, EF Core, Serilog, OpenTelemetry, Swagger, CORS, global exception middleware)
-- M3 progress: implemented `POST /api/projects` and `GET /api/projects` with DTO + FluentValidation
-- M3 progress: implemented `GET /api/projects/{id}`
-- M3 progress: implemented `POST /api/projects/{id}/scan` (queued stub for scanner integration in M5)
-- M3 progress: implemented Tasks endpoints (`POST /api/tasks`, `GET /api/tasks`, `GET /api/tasks/{id}`, `POST /api/tasks/{id}/cancel`)
-- M3 progress: implemented Workflows endpoints (`GET /api/workflows/{id}`, `/steps`, `/logs`, `/artifacts`)
-- M3 progress: implemented Approvals endpoints (`GET /api/approvals/pending`, `POST /api/approvals/{id}/approve`, `POST /api/approvals/{id}/reject`)
-- M3 progress: implemented Git/Diff task endpoints (`GET /api/tasks/{id}/diff`, `POST /api/tasks/{id}/commit`, `POST /api/tasks/{id}/rollback`)
-- M3 progress: implemented Settings endpoints (`GET /api/settings`, `PUT /api/settings`)
-- M3 acceptance: Swagger + DTO endpoints + unified error format + SQLite integration completed
+- Completed: `Milestone 6 (Tooling Core)`
+- Completed: `Milestone 7 (Sandbox Execution)`
+- Completed: `Milestone 8 (Git Integration)`
+- Completed: `Milestone 9 (LLM Gateway)`
+- Completed: `Milestone 10 (Agent Runtime)`
+- Completed: `Milestone 11 (Workflow Orchestrator)`
+- Completed: `Milestone 12 (Memory / Context MVP)`
+- Completed: `Milestone 13 (Build/Test Loop)`
+- Completed: `Milestone 14 (Avalonia UI Shell)`
+- Completed: `Milestone 15 (UI Project + Task Flow)`
+- Completed: `Milestone 16 (UI Workflow Monitor)`
+- Completed: `Milestone 17 (Diff Review + Approval UI)`
+- In progress: `Milestone 18 (Settings & Configuration)`
+- M18 progress: settings UI implemented (provider/model/base URLs, API key masked input, timeout/retries, default approval mode)
+- M18 progress: settings API extended + validation + connection test endpoint (`POST /api/settings/test-connection`)
+- In progress: `Milestone 19 (Security Hardening)`
+- M19 progress: filesystem boundary hardening (path traversal/system dirs/.ssh/.aws blocks) + tests
+- M19 progress: controlled `.env` access in `FileSystemTool` (value redaction on read)
+- M19 progress: prompt security hardening (injection indicators, untrusted external links handling, metadata logging)
+- M19 progress: command security hardening (dangerous blocklist incl. auto deploy patterns, output size limit) + tests
+- M19 progress: file write audit trail in tools (`.maaco/audit/file-writes.log`)
+- M19 progress: sandbox command execution audit trail (`.maaco/audit/command-executions.log`)
+- M19 progress: approval decision audit logging added for `approve/reject` actions (persisted as `LogEvent` with workflow and trace correlation)
+- In progress: `Milestone 20 (Reliability & Recovery)`
+- M20 progress: workflow step checkpoint logs expanded to persist step input/output/error payloads
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout
