@@ -586,6 +586,7 @@ tests/
 - [x] `DebuggingAgent`
 - [x] `GitManagerAgent`
 - [x] `DocumentationAgent`
+- [x] Убрать stub outputs: агенты выполняются через `ILlmGateway`
 
 ## Agent constraints
 

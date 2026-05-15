@@ -2,7 +2,9 @@ using MAACO.Agents.Abstractions;
 using MAACO.Agents.Agents;
 using MAACO.Agents.Prompts;
 using MAACO.Agents.Services;
+using MAACO.Core.Abstractions.Llm;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MAACO.Agents;
 
@@ -10,6 +12,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddMaacoAgents(this IServiceCollection services)
     {
+        services.TryAddSingleton<ILlmGateway, DeterministicLlmGateway>();
         services.AddSingleton<IAgentPromptCatalog, DefaultAgentPromptCatalog>();
         services.AddSingleton<IAgent, OrchestratorAgent>();
         services.AddSingleton<IAgent, TaskPlannerAgent>();

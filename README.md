@@ -13,6 +13,7 @@ It orchestrates scanning, planning, patching, build/test loops, diff review, and
 - `MAACO.Tools` - tool execution layer (filesystem, patch, build/test, git, scanner, logs).
 - `MAACO.Sandbox` - local sandbox execution and safety controls.
 - `MAACO.Agents` - agent runtime, registry, prompts, fake/demo flow support.
+  - runtime agents execute through `ILlmGateway` (no static stub outputs).
 
 ## Requirements
 

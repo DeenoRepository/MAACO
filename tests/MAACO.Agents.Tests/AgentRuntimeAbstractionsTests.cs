@@ -101,7 +101,7 @@ public sealed class AgentRuntimeAbstractionsTests
     public async Task AgentExecutionService_AllowsToolDelegationPayload()
     {
         var tool = new FakeTool("DemoTool");
-        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog());
+        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog(), new FakeLlmGateway());
         var registry = new AgentRegistry([agent]);
         var service = new AgentExecutionService(registry);
         var context = new AgentContext(
@@ -197,7 +197,7 @@ public sealed class AgentRuntimeAbstractionsTests
                 SummaryModel: "fake-default",
                 FallbackModel: "fake-default"));
 
-        var planner = new TaskPlannerAgent([], new DefaultAgentPromptCatalog());
+        var planner = new TaskPlannerAgent([], new DefaultAgentPromptCatalog(), new FakeLlmGateway());
         var registry = new AgentRegistry([planner]);
         var execution = new AgentExecutionService(registry);
         var demo = new AgentDemoWorkflowService(llmGateway, execution);
@@ -215,10 +215,10 @@ public sealed class AgentRuntimeAbstractionsTests
     }
 
     [Fact]
-    public async Task AgentStub_ExecutesDelegatedTool_WhenRequested()
+    public async Task Agent_ExecutesDelegatedTool_WhenRequested()
     {
         var tool = new FakeTool("DemoTool");
-        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog());
+        var agent = new TaskPlannerAgent([tool], new DefaultAgentPromptCatalog(), new FakeLlmGateway());
         var context = new AgentContext(
             Guid.NewGuid(),
             Guid.NewGuid(),
@@ -236,6 +236,19 @@ public sealed class AgentRuntimeAbstractionsTests
         Assert.True(result.Succeeded);
         Assert.Equal(1, tool.CallCount);
         Assert.Equal("executed", result.Metadata!["delegatedTool"]);
+    }
+
+    [Fact]
+    public async Task Agent_UsesLlmGatewayOutput_InsteadOfStubOutput()
+    {
+        var agent = new TaskPlannerAgent([], new DefaultAgentPromptCatalog(), new FakeLlmGateway("llm-output"));
+        var context = new AgentContext(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "plan");
+
+        var result = await agent.ExecuteAsync(context, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("llm-output", result.Output);
+        Assert.DoesNotContain("stub", result.Output, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class FakeAgent(string name) : IAgent
@@ -270,6 +283,21 @@ public sealed class AgentRuntimeAbstractionsTests
                 Error: null,
                 Duration: TimeSpan.FromMilliseconds(1),
                 CorrelationId: request.CorrelationId));
+        }
+    }
+
+    private sealed class FakeLlmGateway(string output = "ok") : ILlmGateway
+    {
+        public Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new LlmResponse(
+                Succeeded: true,
+                Content: output,
+                Usage: new MAACO.Core.Domain.ValueObjects.LlmUsage(1, 1, 2, request.Model ?? "fake-model"),
+                Provider: "Fake",
+                Model: request.Model ?? "fake-model",
+                Duration: TimeSpan.FromMilliseconds(1)));
         }
     }
 
