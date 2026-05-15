@@ -107,8 +107,6 @@ Sample demo task:
 
 ## Troubleshooting
 
-- `dotnet build` fails in Avalonia telemetry task:
-  - if you see permission errors under `AppData\Local\AvaloniaUI\BuildServices\buildtasks.log`, run with proper user permissions or clean locked file state.
 - LLM connection test fails:
   - verify provider URL/model/API key and network access.
 - Git operation tests fail to find `git`:
@@ -121,12 +119,6 @@ Sample demo task:
 ```bash
 dotnet build
 dotnet test
-```
-
-For Avalonia builds in restricted environments, set:
-
-```bash
-AVALONIA_TELEMETRY_OPTOUT=1
 ```
 
 Publish outputs used in Milestone 23:
