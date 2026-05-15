@@ -813,6 +813,7 @@ User Task
 - [x] Status bar
 - [x] Notifications/toasts
 - [x] Loading/error states
+- [x] Enterprise UX refresh (visual hierarchy, cards, status chips, readable forms)
 
 ### Acceptance Criteria
 

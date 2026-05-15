@@ -22,6 +22,18 @@ public sealed partial class MainWindowViewModel : BaseViewModel
     private BaseViewModel currentView;
 
     [ObservableProperty]
+    private string currentViewTitle = "Dashboard";
+
+    [ObservableProperty]
+    private string currentViewDescription = "Workflow health and quick actions.";
+
+    [ObservableProperty]
+    private string apiConnectionState = "Unknown";
+
+    [ObservableProperty]
+    private string realtimeConnectionState = "Disconnected";
+
+    [ObservableProperty]
     private string statusText = "Initializing...";
 
     [ObservableProperty]
@@ -59,8 +71,13 @@ public sealed partial class MainWindowViewModel : BaseViewModel
         this.logsViewModel = logsViewModel;
 
         currentView = dashboardViewModel;
+        UpdateCurrentViewMetadata(currentView);
         navigationService.Navigate(currentView);
-        navigationService.Navigated += (_, viewModel) => CurrentView = viewModel;
+        navigationService.Navigated += (_, viewModel) =>
+        {
+            CurrentView = viewModel;
+            UpdateCurrentViewMetadata(viewModel);
+        };
         realtimeClient.EventReceived += (_, message) => AddNotification(message);
         realtimeClient.ErrorOccurred += (_, message) =>
         {
@@ -101,6 +118,8 @@ public sealed partial class MainWindowViewModel : BaseViewModel
             await realtimeClient.StartAsync(CancellationToken.None);
             HasError = false;
             ErrorMessage = string.Empty;
+            ApiConnectionState = apiHealthy ? "Connected" : "Unavailable";
+            RealtimeConnectionState = realtimeClient.IsConnected ? "Connected" : "Disconnected";
             StatusText = $"API: {(apiHealthy ? "Connected" : "Unavailable")} | SignalR: {(realtimeClient.IsConnected ? "Connected" : "Disconnected")}";
             AddNotification($"API status: {(apiHealthy ? "connected" : "unavailable")}");
             if (!apiHealthy)
@@ -140,5 +159,18 @@ public sealed partial class MainWindowViewModel : BaseViewModel
         {
             Notifications.RemoveAt(Notifications.Count - 1);
         }
+    }
+
+    private void UpdateCurrentViewMetadata(BaseViewModel viewModel)
+    {
+        if (viewModel is IScreenViewModel screenViewModel)
+        {
+            CurrentViewTitle = screenViewModel.Title;
+            CurrentViewDescription = screenViewModel.Description;
+            return;
+        }
+
+        CurrentViewTitle = "MAACO";
+        CurrentViewDescription = "Autonomous SDLC orchestration platform.";
     }
 }

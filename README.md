@@ -40,6 +40,16 @@ dotnet run --project src/MAACO.App
 
 Before starting UI, ensure backend API is already running.
 
+## UI Experience
+
+The desktop shell is optimized for enterprise usage:
+
+- structured sidebar navigation for key SDLC stages;
+- context-aware top header with current screen and connection state chips;
+- card-based layouts for forms, monitor panels, and diff review;
+- persistent status bar with busy indicator and live notifications;
+- consistent loading/error surfaces across workflows.
+
 ## Configure Providers
 
 Open **Settings** screen in UI.

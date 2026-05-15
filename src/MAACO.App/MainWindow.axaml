@@ -4,10 +4,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:MAACO.App.ViewModels"
         xmlns:views="clr-namespace:MAACO.App.Views"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d"
+        d:DesignWidth="1360"
+        d:DesignHeight="860"
         x:Class="MAACO.App.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="MAACO">
+        Title="MAACO - Enterprise Console"
+        MinWidth="1180"
+        MinHeight="760">
     <Window.DataTemplates>
         <DataTemplate DataType="vm:DashboardViewModel">
             <views:ScreenView />
@@ -31,50 +35,87 @@
             <views:ScreenView />
         </DataTemplate>
     </Window.DataTemplates>
-    <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="220,*">
-        <Border Grid.RowSpan="3" Background="#101A24" Padding="14">
-            <StackPanel Spacing="8">
-                <TextBlock Text="MAACO" FontSize="22" FontWeight="Bold" Margin="4,0,0,8"/>
-                <Button Content="Dashboard" Command="{Binding ShowDashboardCommand}" />
-                <Button Content="Projects" Command="{Binding ShowProjectsCommand}" />
-                <Button Content="Task Creation" Command="{Binding ShowTaskCreationCommand}" />
-                <Button Content="Workflow Monitor" Command="{Binding ShowWorkflowMonitorCommand}" />
-                <Button Content="Diff Review" Command="{Binding ShowDiffReviewCommand}" />
-                <Button Content="Settings" Command="{Binding ShowSettingsCommand}" />
-                <Button Content="Logs" Command="{Binding ShowLogsCommand}" />
-            </StackPanel>
+
+    <Grid ColumnDefinitions="260,*" RowDefinitions="*">
+        <Border Grid.Column="0" Classes="surface" Margin="14">
+            <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="MAACO" FontSize="27" FontWeight="Bold" />
+                    <TextBlock Text="Autonomous Engineering Console" Classes="muted" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Spacing="8" Margin="0,20,0,0">
+                    <Button Classes="nav" Content="Dashboard" Command="{Binding ShowDashboardCommand}" />
+                    <Button Classes="nav" Content="Projects" Command="{Binding ShowProjectsCommand}" />
+                    <Button Classes="nav" Content="Task Creation" Command="{Binding ShowTaskCreationCommand}" />
+                    <Button Classes="nav" Content="Workflow Monitor" Command="{Binding ShowWorkflowMonitorCommand}" />
+                    <Button Classes="nav" Content="Diff Review" Command="{Binding ShowDiffReviewCommand}" />
+                    <Button Classes="nav" Content="Settings" Command="{Binding ShowSettingsCommand}" />
+                    <Button Classes="nav" Content="Logs" Command="{Binding ShowLogsCommand}" />
+                </StackPanel>
+
+                <Border Grid.Row="2" Classes="card" Padding="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Runtime Status" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" Classes="muted" />
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Border>
 
-        <Border Grid.Row="0" Grid.Column="1" Margin="12,12,12,0" Padding="10" Background="#3D5A17"
-                IsVisible="{Binding HasError}">
-            <DockPanel>
-                <TextBlock Text="{Binding ErrorMessage}" VerticalAlignment="Center" />
-                <Button DockPanel.Dock="Right" Content="Dismiss" Command="{Binding DismissErrorCommand}" />
-            </DockPanel>
-        </Border>
-
-        <Border Grid.Row="1" Grid.Column="1" Margin="12" Padding="12" Background="#0D1F2E">
-            <ContentControl Content="{Binding CurrentView}" />
-        </Border>
-
-        <Border Grid.Row="2" Grid.Column="1" Background="#0B1826" Padding="10">
-            <DockPanel>
-                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
-                <ProgressBar DockPanel.Dock="Right" Width="140" IsIndeterminate="{Binding IsBusy}" />
-            </DockPanel>
-        </Border>
-
-        <ItemsControl Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24">
-            <ItemsControl.ItemsSource>
-                <Binding Path="Notifications" />
-            </ItemsControl.ItemsSource>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="x:String">
-                    <Border Background="#CC1F2933" CornerRadius="8" Padding="10" Margin="0,0,0,8" MaxWidth="360">
-                        <TextBlock Text="{Binding .}" TextWrapping="Wrap" />
+        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" Margin="0,14,14,14">
+            <Border Grid.Row="0" Classes="surface" Padding="14">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CurrentViewTitle}" Classes="heading" />
+                        <TextBlock Text="{Binding CurrentViewDescription}" Classes="muted" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Classes="card" Padding="10,6">
+                        <TextBlock Text="{Binding ApiConnectionState}" />
                     </Border>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+                    <Border Grid.Column="2" Classes="card" Padding="10,6">
+                        <TextBlock Text="{Binding RealtimeConnectionState}" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Classes="card"
+                    Margin="0,10,0,0"
+                    Padding="10"
+                    Background="#5C1D27"
+                    BorderBrush="#8D2C39"
+                    IsVisible="{Binding HasError}">
+                <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Right" Content="Dismiss" Command="{Binding DismissErrorCommand}" />
+                    <TextBlock Text="{Binding ErrorMessage}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </DockPanel>
+            </Border>
+
+            <Border Grid.Row="2" Classes="surface" Margin="0,10,0,10">
+                <ScrollViewer Padding="14">
+                    <ContentControl Content="{Binding CurrentView}" />
+                </ScrollViewer>
+            </Border>
+
+            <Border Grid.Row="3" Classes="surface" Padding="12">
+                <Grid ColumnDefinitions="220,*,180" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="0" Text="{Binding StatusText}" Classes="muted" />
+                    <ItemsControl Grid.Column="1" HorizontalAlignment="Center" MaxWidth="620">
+                        <ItemsControl.ItemsSource>
+                            <Binding Path="Notifications" />
+                        </ItemsControl.ItemsSource>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="card" Margin="0,0,0,6" Padding="10,6">
+                                    <TextBlock Text="{Binding .}" TextWrapping="Wrap" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ProgressBar Grid.Column="2" Height="8" IsIndeterminate="{Binding IsBusy}" />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

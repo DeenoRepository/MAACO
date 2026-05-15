@@ -3,64 +3,69 @@
              xmlns:vm="clr-namespace:MAACO.App.ViewModels"
              x:DataType="vm:DiffReviewViewModel"
              x:Class="MAACO.App.Views.DiffReviewView">
-    <Border Padding="24" CornerRadius="10" Background="#112A2D34">
-        <StackPanel Spacing="10">
-            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
-            <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
+    <StackPanel Spacing="12">
+        <TextBlock Text="{Binding Title}" Classes="heading" />
+        <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" />
+
+        <Border Classes="card" Padding="12">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <TextBox Grid.Column="0" Text="{Binding TaskId}" PlaceholderText="Task Id (GUID)" />
-                <Button Grid.Column="1" Content="Load Diff" Command="{Binding LoadDiffCommand}" />
+                <Button Grid.Column="1" Classes="primary" Content="Load Diff" Command="{Binding LoadDiffCommand}" />
             </Grid>
-            <TextBlock Text="{Binding DiffStatus}" />
-            <TextBlock Text="Changed Files" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
-            <Border Padding="8" Background="#0A141E" CornerRadius="8" Height="130">
-                <ListBox ItemsSource="{Binding ChangedFiles}" />
-            </Border>
-            <TextBlock Text="Unified Diff" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
-            <Border Padding="8" Background="#0A141E" CornerRadius="8" Height="260">
-                <ListBox ItemsSource="{Binding DiffLines}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:DiffLineViewModel">
-                            <TextBlock Text="{Binding Text}"
-                                       Foreground="{Binding Foreground}"
-                                       FontFamily="Cascadia Code, Consolas, monospace"
-                                       TextWrapping="NoWrap" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Border>
-            <TextBlock Text="Generated Commit Message" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
-            <Border Padding="8" Background="#0A141E" CornerRadius="8">
+        </Border>
+
+        <TextBlock Text="{Binding DiffStatus}" Classes="muted" />
+
+        <Grid ColumnDefinitions="2*,3*" ColumnSpacing="12">
+            <Border Grid.Column="0" Classes="card" Padding="10">
                 <StackPanel Spacing="8">
-                    <TextBlock Text="Template"
-                               FontWeight="SemiBold"
-                               Opacity="0.85" />
-                    <TextBlock Text="{Binding GeneratedCommitMessage}"
-                               FontFamily="Cascadia Code, Consolas, monospace"
-                               TextWrapping="Wrap"
-                               Opacity="0.8" />
-                    <TextBlock Text="Editable"
-                               FontWeight="SemiBold"
-                               Opacity="0.85" />
-                    <TextBox Text="{Binding EditableCommitMessage}"
-                             AcceptsReturn="True"
-                             MinHeight="90"
-                             TextWrapping="Wrap"
-                             FontFamily="Cascadia Code, Consolas, monospace" />
-                    <Button Content="Reset To Template"
-                            HorizontalAlignment="Left"
-                            Command="{Binding ResetCommitMessageCommand}" />
+                    <TextBlock Text="Changed Files" FontWeight="SemiBold" FontSize="16" />
+                    <Border Classes="surface" Height="180" Padding="8">
+                        <ListBox ItemsSource="{Binding ChangedFiles}" />
+                    </Border>
                 </StackPanel>
             </Border>
-            <TextBlock Text="Approval" FontSize="16" FontWeight="SemiBold" Margin="0,6,0,0" />
-            <TextBox Text="{Binding RejectReason}"
-                     PlaceholderText="Reject reason (optional)"
-                     TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="Approve" Command="{Binding ApproveCommand}" />
-                <Button Content="Reject" Command="{Binding RejectCommand}" />
+
+            <Border Grid.Column="1" Classes="card" Padding="10">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Unified Diff" FontWeight="SemiBold" FontSize="16" />
+                    <Border Classes="surface" Height="300" Padding="8">
+                        <ListBox ItemsSource="{Binding DiffLines}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:DiffLineViewModel">
+                                    <TextBlock Text="{Binding Text}"
+                                               Foreground="{Binding Foreground}"
+                                               FontFamily="Cascadia Code, Consolas, monospace"
+                                               TextWrapping="NoWrap" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Classes="card" Padding="10">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Commit Message" FontWeight="SemiBold" FontSize="16" />
+                <TextBlock Text="Template" FontWeight="SemiBold" Classes="muted" />
+                <TextBlock Text="{Binding GeneratedCommitMessage}" FontFamily="Cascadia Code, Consolas, monospace" TextWrapping="Wrap" />
+                <TextBlock Text="Editable" FontWeight="SemiBold" Classes="muted" />
+                <TextBox Text="{Binding EditableCommitMessage}" AcceptsReturn="True" MinHeight="90" TextWrapping="Wrap" FontFamily="Cascadia Code, Consolas, monospace" />
+                <Button Content="Reset To Template" Command="{Binding ResetCommitMessageCommand}" HorizontalAlignment="Left" />
             </StackPanel>
-            <TextBlock Text="{Binding ApprovalStatusMessage}" TextWrapping="Wrap" />
-        </StackPanel>
-    </Border>
+        </Border>
+
+        <Border Classes="card" Padding="10">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Approval" FontWeight="SemiBold" FontSize="16" />
+                <TextBox Text="{Binding RejectReason}" PlaceholderText="Reject reason (optional)" TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Classes="primary" Content="Approve" Command="{Binding ApproveCommand}" />
+                    <Button Content="Reject" Command="{Binding RejectCommand}" />
+                </StackPanel>
+                <TextBlock Text="{Binding ApprovalStatusMessage}" TextWrapping="Wrap" Classes="muted" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
 </UserControl>

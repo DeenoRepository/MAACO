@@ -3,103 +3,94 @@
              xmlns:vm="clr-namespace:MAACO.App.ViewModels"
              x:DataType="vm:WorkflowMonitorViewModel"
              x:Class="MAACO.App.Views.WorkflowMonitorView">
-    <Border Padding="24" CornerRadius="10" Background="#112A2D34">
-        <StackPanel Spacing="10">
+    <StackPanel Spacing="12">
+        <TextBlock Text="{Binding Title}" Classes="heading" />
+        <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" />
+
+        <Border Classes="card" Padding="12">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Left" Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
+                <TextBlock DockPanel.Dock="Left" Text="{Binding RealtimeStatus, StringFormat='Realtime: {0}'}" FontWeight="SemiBold" />
                 <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshCommand}" />
             </DockPanel>
-            <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
-            <Border Padding="8" Background="#102B52" CornerRadius="6">
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                    <TextBlock Text="Realtime:" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding RealtimeStatus}" />
-                </StackPanel>
-            </Border>
-            <Border Padding="8" Background="#5A1A1A" CornerRadius="6" IsVisible="{Binding HasErrors}">
-                <StackPanel Spacing="2">
-                    <TextBlock Text="Error Detected" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding LatestErrorMessage}" TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,8,0,0">
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Workflow Id:" FontWeight="SemiBold"/>
+        </Border>
+
+        <Border Classes="card" Padding="12" IsVisible="{Binding HasErrors}" Background="#5C1D27" BorderBrush="#8D2C39">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Error Detected" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding LatestErrorMessage}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card" Padding="12">
+            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Workflow Id" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding WorkflowId}" TextWrapping="Wrap"/>
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Status:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Status" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding WorkflowStatus}"/>
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Count:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Count" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding RetryCount}"/>
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Current Step:" FontWeight="SemiBold"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Current Step" FontWeight="SemiBold"/>
                 <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentStep}" TextWrapping="Wrap"/>
             </Grid>
-            <TextBlock Text="{Binding TimelineStatus}" />
-            <Border Padding="8" Background="#0A141E" CornerRadius="8">
-                <StackPanel Spacing="4">
-                    <Grid ColumnDefinitions="30,*,150,120">
-                        <TextBlock Grid.Column="0" Text="" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="Step" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="3" Text="Duration" FontWeight="SemiBold" />
-                    </Grid>
-                    <ItemsControl ItemsSource="{Binding Steps}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WorkflowStepItemViewModel">
-                                <Grid ColumnDefinitions="30,*,150,120">
-                                    <TextBlock Grid.Column="0" Text="{Binding Marker}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Status}" />
-                                    <TextBlock Grid.Column="3" Text="{Binding Duration}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </Border>
+        </Border>
 
-            <TextBlock Text="Live Logs" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" />
-            <Grid ColumnDefinitions="140,*,*,Auto,Auto" ColumnSpacing="8">
-                <ComboBox Grid.Column="0" ItemsSource="{Binding SeverityOptions}" SelectedItem="{Binding SeverityFilter}" />
-                <TextBox Grid.Column="1" Text="{Binding AgentFilter}" PlaceholderText="Agent filter" />
-                <TextBox Grid.Column="2" Text="{Binding ToolFilter}" PlaceholderText="Tool filter" />
-                <Button Grid.Column="3" Content="Copy Line" Command="{Binding CopySelectedLogCommand}" />
-                <Button Grid.Column="4" Content="Save View" Command="{Binding SaveLogsViewCommand}" />
-            </Grid>
-            <Border Padding="8" Background="#0A141E" CornerRadius="8">
-                <Grid RowDefinitions="Auto,*" Height="220">
-                    <Grid ColumnDefinitions="140,90,90,*">
-                        <TextBlock Grid.Column="0" Text="Timestamp" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="1" Text="Severity" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="2" Text="Tool" FontWeight="SemiBold" />
-                        <TextBlock Grid.Column="3" Text="Message" FontWeight="SemiBold" />
-                    </Grid>
-                    <ListBox Grid.Row="1" ItemsSource="{Binding FilteredLogs}" SelectedItem="{Binding SelectedLog}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:WorkflowLogItemViewModel">
-                                <Grid ColumnDefinitions="140,90,90,*" Margin="0,2,0,2">
-                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp}" />
-                                    <TextBlock Grid.Column="1" Text="{Binding Severity}" />
-                                    <TextBlock Grid.Column="2" Text="{Binding Tool}" />
-                                    <TextBlock Grid.Column="3" Text="{Binding Message}" TextWrapping="Wrap" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+        <Border Classes="card" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Timeline" FontWeight="SemiBold" FontSize="16" />
+                <TextBlock Text="{Binding TimelineStatus}" Classes="muted" />
+                <Grid ColumnDefinitions="30,*,140,110">
+                    <TextBlock Grid.Column="1" Text="Step" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="3" Text="Duration" FontWeight="SemiBold" />
                 </Grid>
-            </Border>
+                <ItemsControl ItemsSource="{Binding Steps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:WorkflowStepItemViewModel">
+                            <Grid ColumnDefinitions="30,*,140,110">
+                                <TextBlock Grid.Column="0" Text="{Binding Marker}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="2" Text="{Binding Status}" />
+                                <TextBlock Grid.Column="3" Text="{Binding Duration}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
 
-            <TextBlock Text="Agent Activity" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0" />
-            <Border Padding="8" Background="#0A141E" CornerRadius="8">
-                <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto,Auto">
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Active agent:" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ActiveAgent}" />
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Tool execution:" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ActiveTool}" />
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="LLM call status:" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LlmCallStatus}" />
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Token estimate:" FontWeight="SemiBold"/>
-                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding TokenEstimate}" />
+        <Border Classes="card" Padding="12">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Live Logs" FontWeight="SemiBold" FontSize="16" />
+                <Grid ColumnDefinitions="140,*,*,Auto,Auto" ColumnSpacing="8">
+                    <ComboBox Grid.Column="0" ItemsSource="{Binding SeverityOptions}" SelectedItem="{Binding SeverityFilter}" />
+                    <TextBox Grid.Column="1" Text="{Binding AgentFilter}" PlaceholderText="Agent filter" />
+                    <TextBox Grid.Column="2" Text="{Binding ToolFilter}" PlaceholderText="Tool filter" />
+                    <Button Grid.Column="3" Content="Copy Line" Command="{Binding CopySelectedLogCommand}" />
+                    <Button Grid.Column="4" Content="Save View" Command="{Binding SaveLogsViewCommand}" />
                 </Grid>
-            </Border>
-        </StackPanel>
-    </Border>
+                <Border Classes="surface" Padding="8">
+                    <Grid RowDefinitions="Auto,*" Height="220">
+                        <Grid ColumnDefinitions="140,90,90,*">
+                            <TextBlock Grid.Column="0" Text="Timestamp" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" Text="Severity" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="2" Text="Tool" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="3" Text="Message" FontWeight="SemiBold" />
+                        </Grid>
+                        <ListBox Grid.Row="1" ItemsSource="{Binding FilteredLogs}" SelectedItem="{Binding SelectedLog}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:WorkflowLogItemViewModel">
+                                    <Grid ColumnDefinitions="140,90,90,*" Margin="0,2,0,2">
+                                        <TextBlock Grid.Column="0" Text="{Binding Timestamp}" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Severity}" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Tool}" />
+                                        <TextBlock Grid.Column="3" Text="{Binding Message}" TextWrapping="Wrap" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
 </UserControl>

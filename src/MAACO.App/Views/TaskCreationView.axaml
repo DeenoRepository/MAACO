@@ -3,20 +3,20 @@
              xmlns:vm="clr-namespace:MAACO.App.ViewModels"
              x:DataType="vm:TaskCreationViewModel"
              x:Class="MAACO.App.Views.TaskCreationView">
-    <StackPanel Spacing="12">
-        <TextBlock Text="Task Creation" FontSize="24" FontWeight="SemiBold" />
-        <TextBlock Text="Create a task for a selected project and continue to workflow monitoring." Opacity="0.85" />
+    <StackPanel Spacing="14">
+        <TextBlock Text="Task Creation" Classes="heading" />
+        <TextBlock Text="Create execution requests with clear constraints and approval behavior." Classes="muted" />
 
-        <Border Padding="12" Background="#112A2D34" CornerRadius="10">
-            <StackPanel Spacing="8">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="Refresh Projects" Command="{Binding LoadProjectsCommand}" />
-                    <ProgressBar Width="120" IsIndeterminate="{Binding IsBusy}" />
-                </StackPanel>
+        <Border Classes="card" Padding="14">
+            <StackPanel Spacing="10">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="Task Input" FontSize="16" FontWeight="SemiBold" />
+                    <Button DockPanel.Dock="Right" Content="Refresh Projects" Command="{Binding LoadProjectsCommand}" />
+                </DockPanel>
+                <ProgressBar Height="8" IsIndeterminate="{Binding IsBusy}" />
 
                 <TextBlock Text="Project" />
-                <ComboBox ItemsSource="{Binding Projects}"
-                          SelectedItem="{Binding SelectedProject}">
+                <ComboBox ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding Name}" />
@@ -28,16 +28,16 @@
                 <TextBox Text="{Binding TaskTitle}" PlaceholderText="Implement feature X" />
 
                 <TextBlock Text="Description" />
-                <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+                <TextBox Text="{Binding TaskDescription}" AcceptsReturn="True" Height="90" TextWrapping="Wrap" />
 
                 <TextBlock Text="Constraints" />
-                <TextBox Text="{Binding Constraints}" AcceptsReturn="True" Height="70" TextWrapping="Wrap" />
+                <TextBox Text="{Binding Constraints}" AcceptsReturn="True" Height="90" TextWrapping="Wrap" />
 
                 <TextBlock Text="Approval Mode" />
                 <ComboBox ItemsSource="{Binding ApprovalModes}" SelectedItem="{Binding SelectedApprovalMode}" />
 
-                <Button Content="Create Task" Command="{Binding CreateTaskCommand}" />
-                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+                <Button Classes="primary" Content="Create Task" Command="{Binding CreateTaskCommand}" HorizontalAlignment="Left" />
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Classes="muted" />
             </StackPanel>
         </Border>
     </StackPanel>

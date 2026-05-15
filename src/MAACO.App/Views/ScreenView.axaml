@@ -3,10 +3,10 @@
              xmlns:vm="clr-namespace:MAACO.App.ViewModels"
              x:DataType="vm:IScreenViewModel"
              x:Class="MAACO.App.Views.ScreenView">
-    <Border Padding="24" CornerRadius="10" Background="#112A2D34">
+    <Border Classes="card" Padding="24">
         <StackPanel Spacing="10">
-            <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" />
-            <TextBlock Text="{Binding Description}" Opacity="0.85" TextWrapping="Wrap" />
+            <TextBlock Text="{Binding Title}" Classes="heading" />
+            <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" />
         </StackPanel>
     </Border>
 </UserControl>
