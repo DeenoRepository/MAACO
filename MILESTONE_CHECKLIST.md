@@ -1196,15 +1196,6 @@ User Task
 
 ## Manual QA
 
-- [ ] Add repo
-- [ ] Scan repo
-- [ ] Create task
-- [ ] Run workflow
-- [ ] Generate diff
-- [ ] Approve commit
-- [ ] Reject rollback
-- [ ] Restart app during pending approval
-- [ ] Run with Fake provider
 - [x] Add repo
 - [x] Scan repo
 - [x] Create task
@@ -1266,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
