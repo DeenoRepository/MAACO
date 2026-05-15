@@ -15,7 +15,9 @@ namespace MAACO.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddMaacoInfrastructure(this IServiceCollection services)
+    public static IServiceCollection AddMaacoInfrastructure(
+        this IServiceCollection services,
+        LlmProviderOptions? llmProviderOptions = null)
     {
         services.AddSingleton<IEventBus, InMemoryEventBus>();
         services.AddSingleton<IEventHandler<TaskCreatedEvent>, TaskCreatedEventLogHandler>();
@@ -30,16 +32,46 @@ public static class DependencyInjection
         services.AddSingleton<IEventHandler<WorkflowCompletedEvent>, WorkflowCompletedStatusHandler>();
         services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedEventLogHandler>();
         services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailedStatusHandler>();
-        services.AddSingleton(new LlmProviderOptions(
+        var resolvedLlmOptions = llmProviderOptions ?? new LlmProviderOptions(
             Provider: "Fake",
-            DefaultModel: "fake-default"));
+            DefaultModel: "fake-default");
+
+        services.AddSingleton(resolvedLlmOptions);
         services.AddSingleton(new ModelRoutingPolicy(
             PlanningModel: "fake-planning",
             CodingModel: "fake-coding",
             DebuggingModel: "fake-debugging",
             SummaryModel: "fake-summary",
             FallbackModel: "fake-default"));
-        services.AddSingleton<ILlmProvider, FakeLlmProvider>();
+
+        var providerName = resolvedLlmOptions.Provider?.Trim() ?? "Fake";
+        if (string.Equals(providerName, "Ollama", StringComparison.OrdinalIgnoreCase))
+        {
+            var baseUrl = string.IsNullOrWhiteSpace(resolvedLlmOptions.BaseUrl)
+                ? "http://localhost:11434"
+                : resolvedLlmOptions.BaseUrl!;
+            services.AddHttpClient<OllamaLlmProvider>(client =>
+            {
+                client.BaseAddress = new Uri(baseUrl);
+            });
+            services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<OllamaLlmProvider>());
+        }
+        else if (string.Equals(providerName, "OpenAI-Compatible", StringComparison.OrdinalIgnoreCase))
+        {
+            var baseUrl = string.IsNullOrWhiteSpace(resolvedLlmOptions.BaseUrl)
+                ? "https://api.openai.com/v1"
+                : resolvedLlmOptions.BaseUrl!;
+            services.AddHttpClient<OpenAiCompatibleLlmProvider>(client =>
+            {
+                client.BaseAddress = new Uri(baseUrl);
+            });
+            services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<OpenAiCompatibleLlmProvider>());
+        }
+        else
+        {
+            services.AddSingleton<ILlmProvider, FakeLlmProvider>();
+        }
+
         services.AddScoped<ILlmGateway, LlmGateway>();
         services.AddScoped<IMemoryService, MemoryService>();
         services.AddScoped<IWorkflowStepHandler, ProjectScanStepHandler>();

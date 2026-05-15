@@ -61,6 +61,9 @@ Open **Settings** screen in UI.
 4. Click **Test connection**.
 5. Save settings.
 
+Provider selection is also read from config/env at API startup (`Maaco:Settings:LlmProvider`, `Maaco:Settings:LlmModel`).
+For Ollama, local daemon must be running and reachable on configured `Ollama:BaseUrl`.
+
 ### Fake provider
 
 Use `Fake` provider for deterministic local tests and development without external API keys.

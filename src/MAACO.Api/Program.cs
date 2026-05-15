@@ -8,6 +8,7 @@ using MAACO.Infrastructure;
 using MAACO.Persistence;
 using MAACO.Persistence.Data;
 using MAACO.Tools;
+using MAACO.Core.Abstractions.Llm;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
 using Serilog;
@@ -63,8 +64,27 @@ builder.Services
     });
 
 var connectionString = builder.Configuration.GetConnectionString("Maaco") ?? "Data Source=maaco.db";
+var configuredProvider = builder.Configuration["Maaco:Settings:LlmProvider"] ?? "Fake";
+var configuredModel = builder.Configuration["Maaco:Settings:LlmModel"] ?? "fake-default";
+
+var providerBaseUrl = configuredProvider.Equals("Ollama", StringComparison.OrdinalIgnoreCase)
+    ? (builder.Configuration["Ollama:BaseUrl"] ?? "http://localhost:11434")
+    : configuredProvider.Equals("OpenAI-Compatible", StringComparison.OrdinalIgnoreCase)
+        ? (builder.Configuration["OpenAICompatible:BaseUrl"] ?? "https://api.openai.com/v1")
+        : null;
+
+var providerApiKey = configuredProvider.Equals("OpenAI-Compatible", StringComparison.OrdinalIgnoreCase)
+    ? builder.Configuration["OpenAICompatible:ApiKey"]
+    : null;
+
+var llmOptions = new LlmProviderOptions(
+    Provider: configuredProvider,
+    DefaultModel: configuredModel,
+    BaseUrl: providerBaseUrl,
+    ApiKey: providerApiKey);
+
 builder.Services.AddMaacoPersistence(connectionString);
-builder.Services.AddMaacoInfrastructure();
+builder.Services.AddMaacoInfrastructure(llmOptions);
 builder.Services.AddMaacoTools();
 
 builder.Services.AddSingleton<IEventHandler<TaskCreatedEvent>, TaskCreatedSignalrHandler>();
