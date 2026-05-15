@@ -45,6 +45,7 @@ public sealed record WorkflowDto(
     Guid Id,
     Guid TaskId,
     string Status,
+    string? FailureReason,
     int RetryCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,

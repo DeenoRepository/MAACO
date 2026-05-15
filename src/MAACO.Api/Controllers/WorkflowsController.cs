@@ -88,7 +88,8 @@ public sealed class WorkflowsController(
             return this.NotFoundError("Workflow not found.");
         }
 
-        return Ok(Map(workflow));
+        var failureReason = await ResolveFailureReasonAsync(workflow, cancellationToken);
+        return Ok(Map(workflow, failureReason));
     }
 
     [HttpGet("{id:guid}/steps")]
@@ -136,15 +137,32 @@ public sealed class WorkflowsController(
         return Ok(artifacts.Select(Map).ToList());
     }
 
-    private static WorkflowDto Map(Workflow workflow) =>
+    private static WorkflowDto Map(Workflow workflow, string? failureReason) =>
         new(
             workflow.Id,
             workflow.TaskId,
             workflow.Status.ToString(),
+            failureReason,
             workflow.RetryCount,
             workflow.CreatedAt,
             workflow.UpdatedAt,
             workflow.Version);
+
+    private async Task<string?> ResolveFailureReasonAsync(Workflow workflow, CancellationToken cancellationToken)
+    {
+        if (workflow.Status != MAACO.Core.Domain.Enums.WorkflowStatus.Failed)
+        {
+            return null;
+        }
+
+        var logs = await logRepository.ListByWorkflowIdAsync(workflow.Id, cancellationToken);
+        var lastError = logs
+            .Where(x => x.Severity == MAACO.Core.Domain.Enums.LogSeverity.Error)
+            .OrderByDescending(x => x.CreatedAt)
+            .FirstOrDefault();
+
+        return lastError?.Message;
+    }
 
     private static WorkflowStepDto Map(WorkflowStep step) =>
         new(

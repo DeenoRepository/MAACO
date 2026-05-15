@@ -1044,10 +1044,10 @@ User Task
 
 ## Recovery
 
-- [ ] App restart сохраняет workflows
-- [ ] Failed workflow можно открыть
-- [ ] Failed workflow показывает причину
-- [ ] Cancelled workflow сохраняет logs
+- [x] App restart сохраняет workflows
+- [x] Failed workflow можно открыть
+- [x] Failed workflow показывает причину
+- [x] Cancelled workflow сохраняет logs
 - [x] Pending approval сохраняется после restart
 
 ## Retry policies
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

@@ -36,6 +36,8 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - In progress: `Milestone 20 (Reliability & Recovery)`
 - M20 progress: workflow step checkpoint logs expanded to persist step input/output/error payloads
 - M20 progress: pending approval requests are now persisted during `ApprovalStep` and survive app restart/re-scope
+- M20 progress: failed workflows are recoverable after restart via API and now expose failure reason in workflow DTO
+- M20 progress: cancelled workflow execution keeps persisted logs available for post-mortem diagnostics
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout
