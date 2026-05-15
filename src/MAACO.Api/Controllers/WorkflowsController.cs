@@ -46,7 +46,15 @@ public sealed class WorkflowsController(
             return this.NotFoundError($"Task {request.TaskId} not found.");
         }
 
-        var workflowId = Guid.NewGuid();
+        var workflow = new Workflow
+        {
+            TaskId = task.Id,
+            Status = MAACO.Core.Domain.Enums.WorkflowStatus.Created
+        };
+        await workflowRepository.AddWorkflowAsync(workflow, cancellationToken);
+        await workflowRepository.SaveChangesAsync(cancellationToken);
+
+        var workflowId = workflow.Id;
         var correlationId = $"wf-start-{workflowId:N}";
 
         _ = Task.Run(async () =>

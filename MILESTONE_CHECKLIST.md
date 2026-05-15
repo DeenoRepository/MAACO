@@ -1205,12 +1205,21 @@ User Task
 - [ ] Reject rollback
 - [ ] Restart app during pending approval
 - [ ] Run with Fake provider
+- [x] Add repo
+- [x] Scan repo
+- [x] Create task
+- [x] Run workflow
+- [x] Generate diff
+- [x] Approve commit
+- [x] Reject rollback
+- [x] Restart app during pending approval
+- [x] Run with Fake provider
 - [ ] Run with Ollama provider
 
 ### Acceptance Criteria
 
 - [ ] MVP можно собрать и запустить локально
-- [ ] Основной SDLC pipeline работает
+- [x] Основной SDLC pipeline работает
 - [ ] Нет блокирующих ошибок
 - [x] Все non-goals явно задокументированы
 
@@ -1257,7 +1266,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
