@@ -120,6 +120,19 @@ dotnet build
 dotnet test
 ```
 
+For Avalonia builds in restricted environments, set:
+
+```bash
+AVALONIA_TELEMETRY_OPTOUT=1
+```
+
+Publish outputs used in Milestone 23:
+
+```bash
+dotnet publish src/MAACO.Api/MAACO.Api.csproj -c Release -o artifacts/publish/api
+dotnet publish src/MAACO.App/MAACO.App.csproj -c Release -o artifacts/publish/app
+```
+
 ## Release Artifacts
 
 - Release notes: `docs/RELEASE_NOTES_MVP.md`

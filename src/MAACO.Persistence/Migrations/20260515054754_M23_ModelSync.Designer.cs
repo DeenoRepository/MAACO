@@ -3,6 +3,7 @@ using System;
 using MAACO.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MAACO.Persistence.Migrations
 {
     [DbContext(typeof(MaacoDbContext))]
-    partial class MaacoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260515054754_M23_ModelSync")]
+    partial class M23_ModelSync
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.8");

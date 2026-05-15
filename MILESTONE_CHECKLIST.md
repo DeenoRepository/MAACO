@@ -1179,7 +1179,7 @@ User Task
 
 ## Build
 
-- [ ] Проверить clean build
+- [x] Проверить clean build
 - [x] Проверить tests
 - [x] Проверить migrations
 - [ ] Проверить app startup
@@ -1188,8 +1188,8 @@ User Task
 
 ## Packaging
 
-- [ ] Publish backend
-- [ ] Publish Avalonia app
+- [x] Publish backend
+- [x] Publish Avalonia app
 - [x] Создать release notes
 - [x] Создать known limitations
 - [x] Создать `.env.example` или `appsettings.example.json`
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
