@@ -19,13 +19,13 @@ public sealed class ProjectPathValidator : IProjectPathValidator
         "/dev"
     ];
 
-    public Task<ProjectPathValidationResult> ValidateAsync(string path, CancellationToken cancellationToken)
+    public async Task<ProjectPathValidationResult> ValidateAsync(string path, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (string.IsNullOrWhiteSpace(path))
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository path is empty."));
+            return new ProjectPathValidationResult(false, null, "Repository path is empty.");
         }
 
         string fullPath;
@@ -35,17 +35,24 @@ public sealed class ProjectPathValidator : IProjectPathValidator
         }
         catch (Exception)
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository path is invalid."));
+            return new ProjectPathValidationResult(false, null, "Repository path is invalid.");
         }
 
         if (!Directory.Exists(fullPath))
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository directory does not exist."));
+            try
+            {
+                Directory.CreateDirectory(fullPath);
+            }
+            catch (Exception ex)
+            {
+                return new ProjectPathValidationResult(false, null, $"Repository directory does not exist and cannot be created: {ex.Message}");
+            }
         }
 
         if (IsForbiddenPath(fullPath))
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository path points to a restricted system directory."));
+            return new ProjectPathValidationResult(false, null, "Repository path points to a restricted system directory.");
         }
 
         try
@@ -54,21 +61,31 @@ public sealed class ProjectPathValidator : IProjectPathValidator
         }
         catch (UnauthorizedAccessException)
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository directory is not readable."));
+            return new ProjectPathValidationResult(false, null, "Repository directory is not readable.");
         }
         catch (IOException)
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository directory is not accessible."));
+            return new ProjectPathValidationResult(false, null, "Repository directory is not accessible.");
         }
 
-        var gitDirectory = Path.Combine(fullPath, ".git");
-        var hasGit = Directory.Exists(gitDirectory) || File.Exists(gitDirectory);
-        if (!hasGit)
+        var gitRoot = FindGitRoot(fullPath);
+        if (gitRoot is null)
         {
-            return Task.FromResult(new ProjectPathValidationResult(false, null, "Repository must contain a .git directory."));
+            var initResult = await TryInitializeGitRepositoryAsync(fullPath, cancellationToken);
+            if (!initResult.Succeeded)
+            {
+                return new ProjectPathValidationResult(false, null, initResult.ErrorMessage);
+            }
+
+            gitRoot = FindGitRoot(fullPath);
         }
 
-        return Task.FromResult(new ProjectPathValidationResult(true, fullPath, null));
+        if (gitRoot is null)
+        {
+            return new ProjectPathValidationResult(false, null, "Repository must contain a .git directory (current or parent folder).");
+        }
+
+        return new ProjectPathValidationResult(true, gitRoot, null);
     }
 
     private static bool IsForbiddenPath(string fullPath)
@@ -82,5 +99,71 @@ public sealed class ProjectPathValidator : IProjectPathValidator
         }
 
         return false;
+    }
+
+    private static string? FindGitRoot(string startPath)
+    {
+        var current = new DirectoryInfo(startPath);
+        while (current is not null)
+        {
+            var gitPath = Path.Combine(current.FullName, ".git");
+            if (Directory.Exists(gitPath) || File.Exists(gitPath))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    private static async Task<(bool Succeeded, string ErrorMessage)> TryInitializeGitRepositoryAsync(
+        string fullPath,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var startInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = "init",
+                WorkingDirectory = fullPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = System.Diagnostics.Process.Start(startInfo);
+            if (process is null)
+            {
+                return (false, "Repository is missing .git and git init could not be started.");
+            }
+
+            await process.WaitForExitAsync(cancellationToken);
+            if (process.ExitCode == 0)
+            {
+                return (true, string.Empty);
+            }
+
+            var stderr = await process.StandardError.ReadToEndAsync(cancellationToken);
+            return (false, $"Repository is missing .git and auto-init failed: {Trim(stderr)}");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Repository is missing .git and auto-init failed: {ex.Message}");
+        }
+    }
+
+    private static string Trim(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return "unknown error";
+        }
+
+        var normalized = value.Trim();
+        return normalized.Length <= 240 ? normalized : normalized[..240];
     }
 }
