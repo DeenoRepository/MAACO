@@ -5,7 +5,9 @@ using MAACO.Core.Domain.Enums;
 
 namespace MAACO.Infrastructure.Workflows.Steps;
 
-public sealed class ApprovalStepHandler(ILogRepository logRepository) : IWorkflowStepHandler
+public sealed class ApprovalStepHandler(
+    ILogRepository logRepository,
+    IApprovalRepository approvalRepository) : IWorkflowStepHandler
 {
     public string Name => "ApprovalStep";
 
@@ -14,6 +16,22 @@ public sealed class ApprovalStepHandler(ILogRepository logRepository) : IWorkflo
         WorkflowStep step,
         CancellationToken cancellationToken)
     {
+        var existingPending = await approvalRepository.GetPendingByWorkflowIdAsync(context.WorkflowId, cancellationToken);
+        if (existingPending is null)
+        {
+            var approvalRequest = new ApprovalRequest
+            {
+                WorkflowId = context.WorkflowId,
+                Status = ApprovalStatus.Pending,
+                Mode = ResolveApprovalMode(context),
+                RequestedBy = "maaco-system",
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(7)
+            };
+
+            await approvalRepository.AddAsync(approvalRequest, cancellationToken);
+            await approvalRepository.SaveChangesAsync(cancellationToken);
+        }
+
         await logRepository.AddAsync(
             new LogEvent
             {
@@ -25,5 +43,17 @@ public sealed class ApprovalStepHandler(ILogRepository logRepository) : IWorkflo
             },
             cancellationToken);
         await logRepository.SaveChangesAsync(cancellationToken);
+    }
+
+    private static ApprovalMode ResolveApprovalMode(WorkflowExecutionContext context)
+    {
+        if (context.Inputs is not null &&
+            context.Inputs.TryGetValue("ApprovalMode", out var approvalModeRaw) &&
+            Enum.TryParse<ApprovalMode>(approvalModeRaw, ignoreCase: true, out var parsedMode))
+        {
+            return parsedMode;
+        }
+
+        return ApprovalMode.Conditional;
     }
 }

@@ -1048,7 +1048,7 @@ User Task
 - [ ] Failed workflow можно открыть
 - [ ] Failed workflow показывает причину
 - [ ] Cancelled workflow сохраняет logs
-- [ ] Pending approval сохраняется после restart
+- [x] Pending approval сохраняется после restart
 
 ## Retry policies
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
