@@ -60,12 +60,16 @@ public sealed partial class ProjectsViewModel(IProjectsClient projectsClient) : 
         try
         {
             Status = "Creating project...";
-            var project = await projectsClient.CreateProjectAsync(name, SelectedFolderPath.Trim(), CancellationToken.None);
-            if (project is null)
+            var createResult = await projectsClient.CreateProjectAsync(name, SelectedFolderPath.Trim(), CancellationToken.None);
+            if (createResult.Project is null)
             {
-                Status = "Failed to create project. Check API and repository path.";
+                var reason = string.IsNullOrWhiteSpace(createResult.ErrorMessage)
+                    ? "Unknown API error."
+                    : createResult.ErrorMessage;
+                Status = $"Failed to create project: {reason}";
                 return;
             }
+            var project = createResult.Project;
 
             Status = "Running project scan...";
             var scan = await projectsClient.ScanProjectAsync(project.Id, CancellationToken.None);

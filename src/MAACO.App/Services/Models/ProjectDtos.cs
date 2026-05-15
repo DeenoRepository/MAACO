@@ -26,6 +26,10 @@ public sealed record ProjectScanResponse(
     string TestCommand,
     bool IsCommandOverrideApplied);
 
+public sealed record ProjectCreateResult(
+    ProjectDto? Project,
+    string? ErrorMessage);
+
 public sealed record TaskDto(
     Guid Id,
     Guid ProjectId,
