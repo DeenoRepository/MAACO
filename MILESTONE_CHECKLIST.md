@@ -1061,15 +1061,15 @@ User Task
 ## Rollback
 
 - [ ] Rollback unapplied patch
-- [ ] Rollback uncommitted changes
-- [ ] Rollback rejected workflow
-- [ ] Preserve failure artifacts
+- [x] Rollback uncommitted changes
+- [x] Rollback rejected workflow
+- [x] Preserve failure artifacts
 
 ### Acceptance Criteria
 
 - [ ] Restart не теряет состояние
 - [ ] Failed workflow диагностируем
-- [ ] Rollback работает
+- [x] Rollback работает
 - [x] Retry не зацикливается
 
 ---
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

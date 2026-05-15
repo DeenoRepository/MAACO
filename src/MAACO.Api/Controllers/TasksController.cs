@@ -14,6 +14,7 @@ public sealed class TasksController(
     ITaskRepository taskRepository,
     IProjectRepository projectRepository,
     IWorkflowRepository workflowRepository,
+    IArtifactRepository artifactRepository,
     ILogRepository logRepository,
     IValidator<CreateTaskRequest> createTaskRequestValidator) : ControllerBase
 {
@@ -226,8 +227,19 @@ public sealed class TasksController(
             },
             cancellationToken);
 
+        await artifactRepository.AddAsync(
+            new Artifact
+            {
+                TaskId = task.Id,
+                Type = MAACO.Core.Domain.Enums.ArtifactType.Snapshot,
+                Path = $"rollback://task/{task.Id:D}",
+                Hash = $"workflow:{workflow.Id:D};status:{workflow.Status};reason:{request?.Reason?.Trim() ?? "none"}"
+            },
+            cancellationToken);
+
         await workflowRepository.SaveChangesAsync(cancellationToken);
         await taskRepository.SaveChangesAsync(cancellationToken);
+        await artifactRepository.SaveChangesAsync(cancellationToken);
         await logRepository.SaveChangesAsync(cancellationToken);
 
         return Accepted(new TaskActionResponse(
