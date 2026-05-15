@@ -10,8 +10,14 @@ public sealed class TaskRepository(MaacoDbContext dbContext) : ITaskRepository
     public Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TaskItems.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<TaskItem>> ListAsync(CancellationToken cancellationToken) =>
-        await dbContext.TaskItems.OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<TaskItem>> ListAsync(CancellationToken cancellationToken)
+    {
+        // SQLite cannot translate DateTimeOffset ordering in SQL; sort on client side.
+        var tasks = await dbContext.TaskItems.ToListAsync(cancellationToken);
+        return tasks
+            .OrderByDescending(x => x.CreatedAt)
+            .ToList();
+    }
 
     public async Task<IReadOnlyList<TaskItem>> ListByProjectIdAsync(Guid projectId, CancellationToken cancellationToken)
     {

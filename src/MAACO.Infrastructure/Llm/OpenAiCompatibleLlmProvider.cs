@@ -13,7 +13,7 @@ public sealed class OpenAiCompatibleLlmProvider(HttpClient httpClient, LlmProvid
     public async Task<bool> HealthCheckAsync(CancellationToken cancellationToken)
     {
         using var linkedCts = CreateTimeoutCts(cancellationToken);
-        using var request = new HttpRequestMessage(HttpMethod.Get, "/models");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "models");
         ApplyAuth(request);
         using var response = await LlmHttpRetry.SendWithRetryAsync(
             ct => httpClient.SendAsync(request.Clone(), ct),
@@ -80,7 +80,7 @@ public sealed class OpenAiCompatibleLlmProvider(HttpClient httpClient, LlmProvid
         };
 
         var json = JsonSerializer.Serialize(body);
-        var message = new HttpRequestMessage(HttpMethod.Post, "/chat/completions")
+        var message = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };

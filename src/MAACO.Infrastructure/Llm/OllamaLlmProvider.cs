@@ -13,7 +13,7 @@ public sealed class OllamaLlmProvider(HttpClient httpClient, LlmProviderOptions 
     {
         using var linkedCts = CreateTimeoutCts(cancellationToken);
         using var response = await LlmHttpRetry.SendWithRetryAsync(
-            ct => httpClient.GetAsync("/api/tags", ct),
+            ct => httpClient.GetAsync("api/tags", ct),
             options.MaxRetryCount,
             linkedCts.Token);
         return response.IsSuccessStatusCode;
@@ -35,7 +35,7 @@ public sealed class OllamaLlmProvider(HttpClient httpClient, LlmProviderOptions 
         };
 
         var json = JsonSerializer.Serialize(body);
-        using var message = new HttpRequestMessage(HttpMethod.Post, "/api/chat")
+        using var message = new HttpRequestMessage(HttpMethod.Post, "api/chat")
         {
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };

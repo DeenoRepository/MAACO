@@ -1236,6 +1236,14 @@ User Task
 
 ---
 
+# Recent maintenance fixes (post-checklist)
+
+- [x] LLM providers use relative API routes so configured base path (including `/v1`) is preserved.
+- [x] `GET /api/tasks` SQLite ordering stabilized (client-side ordering for `DateTimeOffset` compatibility).
+- [x] README troubleshooting updated for provider URL and task-listing backend fix.
+
+---
+
 # Рекомендуемый порядок реализации
 
 1. Milestone 0 — Bootstrap

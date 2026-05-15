@@ -58,7 +58,7 @@ Open **Settings** screen in UI.
 ### OpenAI-compatible
 
 1. Select provider: `OpenAI-compatible`.
-2. Set `Base URL`.
+2. Set `Base URL` including API version path (for example `https://api.openai.com/v1`).
 3. Set `API Key` in Settings UI field (stored server-side; never returned in plain text).
 4. Set model name.
 5. Click **Test connection** (this performs a real provider connectivity check via backend, not Fake simulation).
@@ -121,7 +121,10 @@ Sample demo task:
 ## Troubleshooting
 
 - LLM connection test fails:
-  - verify provider URL/model/API key and network access.
+  - verify provider URL/model/API key and network access;
+  - for OpenAI-compatible provider use base URL with `/v1` suffix.
+- Task list endpoint returns 500:
+  - update to the latest backend build where SQLite `DateTimeOffset` ordering issue in task listing is fixed.
 - Git operation tests fail to find `git`:
   - ensure `git.exe` is installed and accessible (Windows typical path: `C:\Program Files\Git\cmd\git.exe`).
 - Workflow stuck at approval:
