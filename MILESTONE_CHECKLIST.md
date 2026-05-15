@@ -1133,40 +1133,40 @@ User Task
 
 ## README
 
-- [ ] Что такое MAACO
-- [ ] Архитектура
-- [ ] Требования
-- [ ] Как запустить backend
-- [ ] Как запустить UI
-- [ ] Как настроить OpenAI-compatible provider
-- [ ] Как настроить Ollama
-- [ ] Как использовать Fake provider
-- [ ] Как добавить repo
-- [ ] Как создать task
-- [ ] Как approve/reject changes
+- [x] Что такое MAACO
+- [x] Архитектура
+- [x] Требования
+- [x] Как запустить backend
+- [x] Как запустить UI
+- [x] Как настроить OpenAI-compatible provider
+- [x] Как настроить Ollama
+- [x] Как использовать Fake provider
+- [x] Как добавить repo
+- [x] Как создать task
+- [x] Как approve/reject changes
 
 ## Developer docs
 
-- [ ] Solution structure
-- [ ] Domain model overview
-- [ ] Agent runtime overview
-- [ ] Tooling architecture
-- [ ] Workflow pipeline
-- [ ] Security model
-- [ ] Testing guide
+- [x] Solution structure
+- [x] Domain model overview
+- [x] Agent runtime overview
+- [x] Tooling architecture
+- [x] Workflow pipeline
+- [x] Security model
+- [x] Testing guide
 
 ## Demo
 
-- [ ] Добавить sample project
-- [ ] Добавить demo task
-- [ ] Добавить screenshots или описание flow
-- [ ] Добавить troubleshooting section
+- [x] Добавить sample project
+- [x] Добавить demo task
+- [x] Добавить screenshots или описание flow
+- [x] Добавить troubleshooting section
 
 ### Acceptance Criteria
 
-- [ ] Новый разработчик может запустить MAACO по README
-- [ ] Есть понятный demo flow
-- [ ] Документация соответствует реализации
+- [x] Новый разработчик может запустить MAACO по README
+- [x] Есть понятный demo flow
+- [x] Документация соответствует реализации
 
 ---
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

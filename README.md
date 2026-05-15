@@ -1,73 +1,123 @@
-﻿# MAACO
+# MAACO
 
-MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented platform for autonomous SDLC workflows.
+MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented autonomous SDLC platform.
+It orchestrates scanning, planning, patching, build/test loops, diff review, and human approval for code changes.
 
-## Current Progress
+## Architecture
 
-- Completed: `Milestone 0 (Bootstrap)`
-- Completed: `Milestone 1 (Core Domain Model)`
-- Completed: `Milestone 2 (Persistence Layer / SQLite)`
-- Completed: `Milestone 3 (Backend API Skeleton)`
-- Completed: `Milestone 4 (Realtime Event Bus + SignalR)`
-- Completed: `Milestone 5 (Project Scanner)`
-- Completed: `Milestone 6 (Tooling Core)`
-- Completed: `Milestone 7 (Sandbox Execution)`
-- Completed: `Milestone 8 (Git Integration)`
-- Completed: `Milestone 9 (LLM Gateway)`
-- Completed: `Milestone 10 (Agent Runtime)`
-- Completed: `Milestone 11 (Workflow Orchestrator)`
-- Completed: `Milestone 12 (Memory / Context MVP)`
-- Completed: `Milestone 13 (Build/Test Loop)`
-- Completed: `Milestone 14 (Avalonia UI Shell)`
-- Completed: `Milestone 15 (UI Project + Task Flow)`
-- Completed: `Milestone 16 (UI Workflow Monitor)`
-- Completed: `Milestone 17 (Diff Review + Approval UI)`
-- In progress: `Milestone 18 (Settings & Configuration)`
-- M18 progress: settings UI implemented (provider/model/base URLs, API key masked input, timeout/retries, default approval mode)
-- M18 progress: settings API extended + validation + connection test endpoint (`POST /api/settings/test-connection`)
-- In progress: `Milestone 19 (Security Hardening)`
-- M19 progress: filesystem boundary hardening (path traversal/system dirs/.ssh/.aws blocks) + tests
-- M19 progress: controlled `.env` access in `FileSystemTool` (value redaction on read)
-- M19 progress: prompt security hardening (injection indicators, untrusted external links handling, metadata logging)
-- M19 progress: command security hardening (dangerous blocklist incl. auto deploy patterns, output size limit) + tests
-- M19 progress: file write audit trail in tools (`.maaco/audit/file-writes.log`)
-- M19 progress: sandbox command execution audit trail (`.maaco/audit/command-executions.log`)
-- M19 progress: approval decision audit logging added for `approve/reject` actions (persisted as `LogEvent` with workflow and trace correlation)
-- In progress: `Milestone 20 (Reliability & Recovery)`
-- M20 progress: workflow step checkpoint logs expanded to persist step input/output/error payloads
-- M20 progress: pending approval requests are now persisted during `ApprovalStep` and survive app restart/re-scope
-- M20 progress: failed workflows are recoverable after restart via API and now expose failure reason in workflow DTO
-- M20 progress: cancelled workflow execution keeps persisted logs available for post-mortem diagnostics
-- M20 progress: LLM retry policy hardened with bounded max retries, exponential backoff, and no-retry behavior for validation failures
-- M20 progress: tool execution now retries transient failures with bounded exponential backoff and no-retry behavior for validation errors
-- M20 progress: rollback-on-reject now persists rollback snapshot artifact and keeps failure diagnostics artifacts available
-- M20 progress: rollback now also cleans up unapplied debug patch files and records cleanup in workflow logs
-- M20 progress: restart/re-scope recovery verified for failed workflows with persisted steps/logs and API-level diagnostic reason
-- Completed: `Milestone 21 (Testing)`
-- M21 progress: core/tools/agents/workflow test matrix aligned with checklist; deterministic Fake LLM test paths validated
-- Source of milestone truth: `MILESTONE_CHECKLIST.md`
+- `MAACO.Api` - ASP.NET Core backend API + workflow endpoints + SignalR hub.
+- `MAACO.App` - Avalonia desktop client (projects, tasks, monitor, diff, settings).
+- `MAACO.Core` - domain model, enums, abstractions, workflow contracts.
+- `MAACO.Infrastructure` - workflow engine, LLM gateway, memory service, event handlers.
+- `MAACO.Persistence` - EF Core + SQLite, repositories, migrations.
+- `MAACO.Tools` - tool execution layer (filesystem, patch, build/test, git, scanner, logs).
+- `MAACO.Sandbox` - local sandbox execution and safety controls.
+- `MAACO.Agents` - agent runtime, registry, prompts, fake/demo flow support.
 
-## Repository Layout
+## Requirements
 
-- `src/MAACO.Api` - ASP.NET Core API
-- `src/MAACO.App` - Avalonia desktop app
-- `src/MAACO.Core` - domain and contracts
-- `src/MAACO.Infrastructure` - infrastructure adapters
-- `src/MAACO.Agents` - agent orchestration layer
-- `src/MAACO.Tools` - tool execution layer
-- `src/MAACO.Persistence` - data access and EF Core
-- `src/MAACO.Sandbox` - sandboxed execution
-- `tests/*` - unit/integration test projects
+- .NET SDK 10.0+
+- Windows (primary dev target in current setup)
+- SQLite (embedded via EF Core)
+- Optional:
+  - OpenAI-compatible endpoint for cloud LLM
+  - Ollama for local LLM
 
-## Build
+## Run Backend
 
 ```bash
 dotnet restore
-dotnet build
+dotnet run --project src/MAACO.Api
 ```
 
-## Test
+Default local API URL is typically from `launchSettings.json` (for example `http://localhost:5000` or `https://localhost:5001`).
+
+## Run UI
 
 ```bash
+dotnet run --project src/MAACO.App
+```
+
+Before starting UI, ensure backend API is already running.
+
+## Configure Providers
+
+Open **Settings** screen in UI.
+
+### OpenAI-compatible
+
+1. Select provider: `OpenAI-compatible`.
+2. Set `Base URL`.
+3. Set `API Key`.
+4. Set model name.
+5. Click **Test connection**.
+6. Save settings.
+
+### Ollama
+
+1. Select provider: `Ollama`.
+2. Set `Base URL` (usually `http://localhost:11434`).
+3. Set model name available in local Ollama.
+4. Click **Test connection**.
+5. Save settings.
+
+### Fake provider
+
+Use `Fake` provider for deterministic local tests and development without external API keys.
+
+## User Flow
+
+### Add repository
+
+1. Open **Projects**.
+2. Add local repository path.
+3. Run scan.
+4. Review detected stack and build/test command suggestions.
+
+### Create task
+
+1. Open **Task Creation**.
+2. Select project.
+3. Enter title/description/constraints.
+4. Choose approval mode.
+5. Start task.
+
+### Approve or reject changes
+
+1. Open **Diff Review** when workflow reaches approval step.
+2. Review changed files/unified diff.
+3. Approve to proceed with commit path.
+4. Reject to trigger rollback path (with rollback artifact/logging).
+
+## Demo Flow
+
+Sample demo task:
+
+- Project: this repository (`MAACO`)
+- Task title: `Improve workflow diagnostics for failed runs`
+- Expected flow:
+  - scan project
+  - run planning/code/debug loop
+  - produce diff
+  - stop on approval
+  - approve or reject and inspect resulting logs/artifacts
+
+## Troubleshooting
+
+- `dotnet build` fails in Avalonia telemetry task:
+  - if you see permission errors under `AppData\Local\AvaloniaUI\BuildServices\buildtasks.log`, run with proper user permissions or clean locked file state.
+- LLM connection test fails:
+  - verify provider URL/model/API key and network access.
+- Git operation tests fail to find `git`:
+  - ensure `git.exe` is installed and accessible (Windows typical path: `C:\Program Files\Git\cmd\git.exe`).
+- Workflow stuck at approval:
+  - this is expected for human-in-the-loop mode; proceed via approve/reject endpoints or UI actions.
+
+## Build & Test
+
+```bash
+dotnet build
 dotnet test
 ```
+
+For current implementation progress and milestone truth see `MILESTONE_CHECKLIST.md`.
