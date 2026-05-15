@@ -43,6 +43,8 @@ MAACO (Multi-Agent Autonomous Coding Orchestrator) is a production-oriented plat
 - M20 progress: rollback-on-reject now persists rollback snapshot artifact and keeps failure diagnostics artifacts available
 - M20 progress: rollback now also cleans up unapplied debug patch files and records cleanup in workflow logs
 - M20 progress: restart/re-scope recovery verified for failed workflows with persisted steps/logs and API-level diagnostic reason
+- Completed: `Milestone 21 (Testing)`
+- M21 progress: core/tools/agents/workflow test matrix aligned with checklist; deterministic Fake LLM test paths validated
 - Source of milestone truth: `MILESTONE_CHECKLIST.md`
 
 ## Repository Layout

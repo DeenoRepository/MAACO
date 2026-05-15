@@ -1083,44 +1083,44 @@ User Task
 
 ## Core tests
 
-- [ ] State transitions
-- [ ] Entity validation
-- [ ] Value objects
-- [ ] Approval status transitions
+- [x] State transitions
+- [x] Entity validation
+- [x] Value objects
+- [x] Approval status transitions
 
 ## Tools tests
 
-- [ ] ProjectScannerTool
-- [ ] FileSystemTool workspace boundary
-- [ ] CodePatchTool apply valid patch
-- [ ] CodePatchTool reject invalid patch
-- [ ] BuildTool timeout
-- [ ] GitTool diff
-- [ ] GitTool commit
-- [ ] Secret redaction
+- [x] ProjectScannerTool
+- [x] FileSystemTool workspace boundary
+- [x] CodePatchTool apply valid patch
+- [x] CodePatchTool reject invalid patch
+- [x] BuildTool timeout
+- [x] GitTool diff
+- [x] GitTool commit
+- [x] Secret redaction
 
 ## Agents tests
 
-- [ ] TaskPlannerAgent with fake LLM
-- [ ] BackendDeveloperAgent parses structured output
-- [ ] DebuggingAgent handles build error
-- [ ] DocumentationAgent produces artifact
+- [x] TaskPlannerAgent with fake LLM
+- [x] BackendDeveloperAgent parses structured output
+- [x] DebuggingAgent handles build error
+- [x] DocumentationAgent produces artifact
 
 ## Workflow tests
 
-- [ ] Happy path workflow
-- [ ] Build failure debug loop
-- [ ] Max retries failure
-- [ ] Approval approve path
-- [ ] Approval reject path
-- [ ] Cancellation path
+- [x] Happy path workflow
+- [x] Build failure debug loop
+- [x] Max retries failure
+- [x] Approval approve path
+- [x] Approval reject path
+- [x] Cancellation path
 
 ### Acceptance Criteria
 
-- [ ] `dotnet test` проходит
-- [ ] Critical path покрыт тестами
-- [ ] Fake LLM используется для deterministic tests
-- [ ] Tests не требуют реального API key
+- [x] `dotnet test` проходит
+- [x] Critical path покрыт тестами
+- [x] Fake LLM используется для deterministic tests
+- [x] Tests не требуют реального API key
 
 ---
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

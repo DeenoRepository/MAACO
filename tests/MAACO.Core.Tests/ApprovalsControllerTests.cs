@@ -70,6 +70,48 @@ public sealed class ApprovalsControllerTests
         logRepository.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public async Task Approve_ReturnsBadRequest_WhenApprovalIsNotPending()
+    {
+        var approval = CreatePendingApproval();
+        approval.Status = ApprovalStatus.Rejected;
+
+        var approvalRepository = new Mock<IApprovalRepository>();
+        var logRepository = new Mock<ILogRepository>();
+
+        approvalRepository
+            .Setup(x => x.GetByIdAsync(approval.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(approval);
+
+        var controller = CreateController(approvalRepository.Object, logRepository.Object, "trace-approve-invalid");
+        var response = await controller.Approve(approval.Id, CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(response.Result);
+        approvalRepository.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        logRepository.Verify(x => x.AddAsync(It.IsAny<LogEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Reject_ReturnsBadRequest_WhenApprovalIsNotPending()
+    {
+        var approval = CreatePendingApproval();
+        approval.Status = ApprovalStatus.Approved;
+
+        var approvalRepository = new Mock<IApprovalRepository>();
+        var logRepository = new Mock<ILogRepository>();
+
+        approvalRepository
+            .Setup(x => x.GetByIdAsync(approval.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(approval);
+
+        var controller = CreateController(approvalRepository.Object, logRepository.Object, "trace-reject-invalid");
+        var response = await controller.Reject(approval.Id, CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(response.Result);
+        approvalRepository.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        logRepository.Verify(x => x.AddAsync(It.IsAny<LogEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
     private static ApprovalsController CreateController(
         IApprovalRepository approvalRepository,
         ILogRepository logRepository,

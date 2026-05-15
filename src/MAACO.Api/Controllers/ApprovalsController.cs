@@ -28,6 +28,10 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository, 
         {
             return this.NotFoundError("Approval request not found.");
         }
+        if (approval.Status != ApprovalStatus.Pending)
+        {
+            return BadRequest("Approval request is not in pending state.");
+        }
 
         approval.Status = ApprovalStatus.Approved;
         approval.UpdatedAt = DateTimeOffset.UtcNow;
@@ -46,6 +50,10 @@ public sealed class ApprovalsController(IApprovalRepository approvalRepository, 
         if (approval is null)
         {
             return this.NotFoundError("Approval request not found.");
+        }
+        if (approval.Status != ApprovalStatus.Pending)
+        {
+            return BadRequest("Approval request is not in pending state.");
         }
 
         approval.Status = ApprovalStatus.Rejected;
