@@ -82,14 +82,16 @@ builder.Services.AddSingleton<IEventHandler<WorkflowFailedEvent>, WorkflowFailed
 var app = builder.Build();
 app.Services.UseMaacoInfrastructure();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
-
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();
     await db.Database.MigrateAsync();
-    await DbSeed.InitializeAsync(db);
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapOpenApi();
+        await DbSeed.InitializeAsync(db);
+    }
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

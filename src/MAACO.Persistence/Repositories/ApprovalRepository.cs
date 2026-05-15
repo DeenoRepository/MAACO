@@ -17,10 +17,11 @@ public sealed class ApprovalRepository(MaacoDbContext dbContext) : IApprovalRepo
             .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<ApprovalRequest>> ListPendingAsync(CancellationToken cancellationToken) =>
-        await dbContext.ApprovalRequests
+        (await dbContext.ApprovalRequests
             .Where(x => x.Status == ApprovalStatus.Pending)
+            .ToListAsync(cancellationToken))
             .OrderBy(x => x.CreatedAt)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
     public Task AddAsync(ApprovalRequest approvalRequest, CancellationToken cancellationToken) =>
         dbContext.ApprovalRequests.AddAsync(approvalRequest, cancellationToken).AsTask();

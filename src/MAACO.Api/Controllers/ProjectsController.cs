@@ -88,6 +88,16 @@ public sealed class ProjectsController(
             RepositoryPath = new RepositoryPath(pathValidation.NormalizedPath!)
         };
 
+        var existing = (await projectRepository.ListAsync(cancellationToken))
+            .FirstOrDefault(x => string.Equals(
+                x.RepositoryPath.Value,
+                project.RepositoryPath.Value,
+                StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            return Ok(Map(existing));
+        }
+
         await projectRepository.AddAsync(project, cancellationToken);
         await projectRepository.SaveChangesAsync(cancellationToken);
 
