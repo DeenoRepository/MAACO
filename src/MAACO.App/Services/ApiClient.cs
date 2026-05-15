@@ -8,7 +8,7 @@ public sealed class ApiClient(HttpClient httpClient) : IApiClient
     {
         try
         {
-            using var response = await httpClient.GetAsync("api/workflows", cancellationToken);
+            using var response = await httpClient.GetAsync("api/settings", cancellationToken);
             return response.IsSuccessStatusCode;
         }
         catch
