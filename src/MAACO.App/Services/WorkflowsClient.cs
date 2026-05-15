@@ -5,19 +5,33 @@ namespace MAACO.App.Services;
 
 public sealed class WorkflowsClient(HttpClient httpClient) : IWorkflowsClient
 {
-    public async Task<WorkflowStartResponse?> StartWorkflowAsync(Guid taskId, string trigger, CancellationToken cancellationToken)
+    public async Task<WorkflowStartResult> StartWorkflowAsync(Guid taskId, string trigger, CancellationToken cancellationToken)
     {
-        var response = await httpClient.PostAsJsonAsync(
-            "api/workflows/start",
-            new { TaskId = taskId, Trigger = trigger },
-            cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            return null;
-        }
+            var response = await httpClient.PostAsJsonAsync(
+                "api/workflows/start",
+                new { TaskId = taskId, Trigger = trigger },
+                cancellationToken);
 
-        return await response.Content.ReadFromJsonAsync<WorkflowStartResponse>(cancellationToken: cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var details = await response.Content.ReadAsStringAsync(cancellationToken);
+                var message = string.IsNullOrWhiteSpace(details)
+                    ? $"HTTP {(int)response.StatusCode}"
+                    : $"HTTP {(int)response.StatusCode}: {Trim(details)}";
+                return new WorkflowStartResult(null, message);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<WorkflowStartResponse>(cancellationToken: cancellationToken);
+            return result is null
+                ? new WorkflowStartResult(null, "API returned empty response body.")
+                : new WorkflowStartResult(result, null);
+        }
+        catch (Exception ex)
+        {
+            return new WorkflowStartResult(null, ex.Message);
+        }
     }
 
     public async Task<WorkflowDto?> GetWorkflowAsync(Guid workflowId, CancellationToken cancellationToken)
@@ -32,4 +46,7 @@ public sealed class WorkflowsClient(HttpClient httpClient) : IWorkflowsClient
             cancellationToken);
         return steps ?? [];
     }
+
+    private static string Trim(string value) =>
+        value.Length <= 240 ? value : value[..240];
 }

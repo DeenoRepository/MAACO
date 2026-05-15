@@ -63,6 +63,7 @@ Open **Settings** screen in UI.
 4. Set model name.
 5. Click **Test connection** (this performs a real provider connectivity check via backend, not Fake simulation).
 6. Save settings.
+7. Use **Reload** to verify `API key stored` state in UI.
 
 ### Ollama
 
@@ -95,6 +96,7 @@ Use `Fake` provider for deterministic local tests and development without extern
 3. Enter title/description/constraints.
 4. Choose approval mode.
 5. Start task.
+6. If creation/start fails, UI shows backend HTTP error details directly in status line.
 
 ### Approve or reject changes
 

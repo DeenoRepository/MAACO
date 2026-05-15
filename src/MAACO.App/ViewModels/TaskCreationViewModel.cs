@@ -92,28 +92,32 @@ public sealed partial class TaskCreationViewModel(
                 description,
                 CancellationToken.None);
 
-            if (task is null)
+            if (task.Task is null)
             {
-                Status = "Failed to create task.";
+                var reason = string.IsNullOrWhiteSpace(task.ErrorMessage) ? "Unknown API error." : task.ErrorMessage;
+                Status = $"Failed to create task: {reason}";
                 return;
             }
+            var createdTask = task.Task;
 
-            Status = $"Task created: {task.Id:D}. Starting workflow...";
+            Status = $"Task created: {createdTask.Id:D}. Starting workflow...";
             var workflowStart = await workflowsClient.StartWorkflowAsync(
-                task.Id,
+                createdTask.Id,
                 trigger: "ui-task-start",
                 CancellationToken.None);
-            if (workflowStart is null)
+            if (workflowStart.Response is null)
             {
-                Status = $"Task created: {task.Id:D}, but workflow start failed.";
+                var reason = string.IsNullOrWhiteSpace(workflowStart.ErrorMessage) ? "Unknown API error." : workflowStart.ErrorMessage;
+                Status = $"Task created: {createdTask.Id:D}, but workflow start failed: {reason}";
                 return;
             }
+            var workflow = workflowStart.Response;
 
             workflowMonitorViewModel.SetWorkflowSummary(
-                workflowStart.WorkflowId,
-                workflowStart.Status,
+                workflow.WorkflowId,
+                workflow.Status,
                 retries: 0);
-            Status = $"Workflow queued: {workflowStart.WorkflowId:D}. Opening workflow monitor.";
+            Status = $"Workflow queued: {workflow.WorkflowId:D}. Opening workflow monitor.";
             navigationService.Navigate(workflowMonitorViewModel);
         }
         finally

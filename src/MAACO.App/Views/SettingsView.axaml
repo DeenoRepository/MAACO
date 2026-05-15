@@ -35,6 +35,7 @@
                     <Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
                     <Button Classes="primary" Content="Save" Command="{Binding SaveSettingsCommand}" />
                 </StackPanel>
+                <TextBlock Text="{Binding ApiKeyState}" Classes="muted" />
             </StackPanel>
         </Border>
 

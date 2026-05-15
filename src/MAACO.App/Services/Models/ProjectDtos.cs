@@ -40,10 +40,18 @@ public sealed record TaskDto(
     DateTimeOffset UpdatedAt,
     long Version);
 
+public sealed record TaskCreateResult(
+    TaskDto? Task,
+    string? ErrorMessage);
+
 public sealed record WorkflowStartResponse(
     Guid WorkflowId,
     string Status,
     string Message);
+
+public sealed record WorkflowStartResult(
+    WorkflowStartResponse? Response,
+    string? ErrorMessage);
 
 public sealed record WorkflowDto(
     Guid Id,

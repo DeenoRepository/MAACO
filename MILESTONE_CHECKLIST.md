@@ -851,6 +851,7 @@ User Task
 - [x] Выбрать approval mode
 - [x] Запустить task
 - [x] Перейти в workflow monitor
+- [x] Показать детальные API ошибки при create/start workflow
 
 ### Acceptance Criteria
 
@@ -969,6 +970,7 @@ User Task
 - [x] API key redaction
 - [x] Test connection button
 - [x] Не логировать secrets
+- [x] UI показывает состояние сохранения API key без раскрытия секрета
 
 ### Acceptance Criteria
 

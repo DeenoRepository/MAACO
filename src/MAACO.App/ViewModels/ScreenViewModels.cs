@@ -547,6 +547,9 @@ public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
     [ObservableProperty]
     private string settingsStatus = "Settings are ready to be adjusted.";
 
+    [ObservableProperty]
+    private string apiKeyState = "API key status unknown.";
+
     public IReadOnlyList<string> Providers { get; } = ["OpenAI-compatible", "Ollama", "Fake"];
 
     public SettingsViewModel(ISettingsClient settingsClient)
@@ -573,6 +576,7 @@ public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
         SettingsStatus = settings.HasApiKey
             ? "Settings loaded. API key is stored (hidden)."
             : "Settings loaded. API key is not set.";
+        ApiKeyState = settings.HasApiKey ? "Stored in backend (hidden)." : "Not stored.";
     }
 
     [RelayCommand]
@@ -621,6 +625,7 @@ public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
         SettingsStatus = updated.HasApiKey
             ? $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}. API key stored."
             : $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}.";
+        ApiKeyState = updated.HasApiKey ? "Stored in backend (hidden)." : "Not stored.";
     }
 }
 

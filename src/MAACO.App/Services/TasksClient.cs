@@ -5,24 +5,38 @@ namespace MAACO.App.Services;
 
 public sealed class TasksClient(HttpClient httpClient) : ITasksClient
 {
-    public async Task<TaskDto?> CreateTaskAsync(Guid projectId, string title, string? description, CancellationToken cancellationToken)
+    public async Task<TaskCreateResult> CreateTaskAsync(Guid projectId, string title, string? description, CancellationToken cancellationToken)
     {
-        var response = await httpClient.PostAsJsonAsync(
-            "api/tasks",
-            new
-            {
-                ProjectId = projectId,
-                Title = title,
-                Description = description
-            },
-            cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            return null;
-        }
+            var response = await httpClient.PostAsJsonAsync(
+                "api/tasks",
+                new
+                {
+                    ProjectId = projectId,
+                    Title = title,
+                    Description = description
+                },
+                cancellationToken);
 
-        return await response.Content.ReadFromJsonAsync<TaskDto>(cancellationToken: cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var details = await response.Content.ReadAsStringAsync(cancellationToken);
+                var message = string.IsNullOrWhiteSpace(details)
+                    ? $"HTTP {(int)response.StatusCode}"
+                    : $"HTTP {(int)response.StatusCode}: {Trim(details)}";
+                return new TaskCreateResult(null, message);
+            }
+
+            var task = await response.Content.ReadFromJsonAsync<TaskDto>(cancellationToken: cancellationToken);
+            return task is null
+                ? new TaskCreateResult(null, "API returned empty response body.")
+                : new TaskCreateResult(task, null);
+        }
+        catch (Exception ex)
+        {
+            return new TaskCreateResult(null, ex.Message);
+        }
     }
 
     public async Task<TaskDto?> GetTaskByIdAsync(Guid taskId, CancellationToken cancellationToken)
@@ -69,4 +83,7 @@ public sealed class TasksClient(HttpClient httpClient) : ITasksClient
 
         return await response.Content.ReadFromJsonAsync<TaskActionResponse>(cancellationToken: cancellationToken);
     }
+
+    private static string Trim(string value) =>
+        value.Length <= 240 ? value : value[..240];
 }

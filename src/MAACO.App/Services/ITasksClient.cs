@@ -4,7 +4,7 @@ namespace MAACO.App.Services;
 
 public interface ITasksClient
 {
-    Task<TaskDto?> CreateTaskAsync(Guid projectId, string title, string? description, CancellationToken cancellationToken);
+    Task<TaskCreateResult> CreateTaskAsync(Guid projectId, string title, string? description, CancellationToken cancellationToken);
     Task<TaskDto?> GetTaskByIdAsync(Guid taskId, CancellationToken cancellationToken);
     Task<TaskDiffResponse?> GetTaskDiffAsync(Guid taskId, CancellationToken cancellationToken);
     Task<TaskActionResponse?> CommitTaskAsync(Guid taskId, CancellationToken cancellationToken);
