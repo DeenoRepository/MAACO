@@ -1212,7 +1212,7 @@ User Task
 - [ ] MVP можно собрать и запустить локально
 - [ ] Основной SDLC pipeline работает
 - [ ] Нет блокирующих ошибок
-- [ ] Все non-goals явно задокументированы
+- [x] Все non-goals явно задокументированы
 
 ---
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
