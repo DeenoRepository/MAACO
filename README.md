@@ -120,4 +120,10 @@ dotnet build
 dotnet test
 ```
 
+## Release Artifacts
+
+- Release notes: `docs/RELEASE_NOTES_MVP.md`
+- Known limitations: `docs/KNOWN_LIMITATIONS.md`
+- API config template: `src/MAACO.Api/appsettings.example.json`
+
 For current implementation progress and milestone truth see `MILESTONE_CHECKLIST.md`.
