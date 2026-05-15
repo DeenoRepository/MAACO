@@ -31,7 +31,7 @@ builder.Services.AddSingleton<IProjectStackDetector, ProjectStackDetector>();
 builder.Services.AddSingleton<IProjectBuildTestCommandDetector, ProjectBuildTestCommandDetector>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
@@ -76,8 +76,7 @@ app.Services.UseMaacoInfrastructure();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<MaacoDbContext>();

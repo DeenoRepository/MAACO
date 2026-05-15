@@ -40,7 +40,7 @@ public static class DependencyInjection
             SummaryModel: "fake-summary",
             FallbackModel: "fake-default"));
         services.AddSingleton<ILlmProvider, FakeLlmProvider>();
-        services.AddSingleton<ILlmGateway, LlmGateway>();
+        services.AddScoped<ILlmGateway, LlmGateway>();
         services.AddScoped<IMemoryService, MemoryService>();
         services.AddScoped<IWorkflowStepHandler, ProjectScanStepHandler>();
         services.AddScoped<IWorkflowStepHandler, GitBranchStepHandler>();
