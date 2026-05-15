@@ -1183,7 +1183,7 @@ User Task
 - [x] Проверить tests
 - [x] Проверить migrations
 - [ ] Проверить app startup
-- [ ] Проверить logs directory
+- [x] Проверить logs directory
 - [x] Проверить config templates
 
 ## Packaging
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

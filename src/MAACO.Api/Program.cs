@@ -12,6 +12,9 @@ using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
 using Serilog;
 
+var logsDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
+Directory.CreateDirectory(logsDirectory);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, services, configuration) =>
@@ -20,7 +23,12 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext()
-        .WriteTo.Console();
+        .WriteTo.Console()
+        .WriteTo.File(
+            Path.Combine(logsDirectory, "maaco-.log"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 14,
+            shared: true);
 });
 
 builder.Services.AddControllers();

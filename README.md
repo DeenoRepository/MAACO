@@ -133,6 +133,8 @@ dotnet publish src/MAACO.Api/MAACO.Api.csproj -c Release -o artifacts/publish/ap
 dotnet publish src/MAACO.App/MAACO.App.csproj -c Release -o artifacts/publish/app
 ```
 
+API runtime logs are written to `logs/` under the API app base directory.
+
 ## Release Artifacts
 
 - Release notes: `docs/RELEASE_NOTES_MVP.md`
