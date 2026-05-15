@@ -23,6 +23,12 @@ public sealed class AppSettingsDbOverrideSettingsService(IConfiguration configur
             MaxParallelAgents: overrides.TryGetValue("MaxParallelAgents", out var maxParallelAgents) && int.TryParse(maxParallelAgents, out var parsedMaxParallelAgents)
                 ? parsedMaxParallelAgents
                 : defaults.MaxParallelAgents,
+            ProviderBaseUrl: overrides.TryGetValue("ProviderBaseUrl", out var providerBaseUrl)
+                ? NullIfEmpty(providerBaseUrl)
+                : defaults.ProviderBaseUrl,
+            HasApiKey: overrides.TryGetValue("ApiKey", out var apiKeyOverride)
+                ? !string.IsNullOrWhiteSpace(apiKeyOverride)
+                : defaults.HasApiKey,
             BuildCommandOverride: overrides.TryGetValue("BuildCommandOverride", out var buildCommandOverride) ? NullIfEmpty(buildCommandOverride) : defaults.BuildCommandOverride,
             TestCommandOverride: overrides.TryGetValue("TestCommandOverride", out var testCommandOverride) ? NullIfEmpty(testCommandOverride) : defaults.TestCommandOverride);
     }
@@ -36,9 +42,15 @@ public sealed class AppSettingsDbOverrideSettingsService(IConfiguration configur
             ["LlmModel"] = request.LlmModel.Trim(),
             ["RequireApproval"] = request.RequireApproval.ToString(),
             ["MaxParallelAgents"] = request.MaxParallelAgents.ToString(),
+            ["ProviderBaseUrl"] = NormalizeOptional(request.ProviderBaseUrl),
             ["BuildCommandOverride"] = NormalizeOptional(request.BuildCommandOverride),
             ["TestCommandOverride"] = NormalizeOptional(request.TestCommandOverride)
         };
+
+        if (request.ApiKey is not null)
+        {
+            normalized["ApiKey"] = NormalizeOptional(request.ApiKey);
+        }
 
         await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync(cancellationToken);
@@ -68,6 +80,8 @@ public sealed class AppSettingsDbOverrideSettingsService(IConfiguration configur
             LlmModel: section["LlmModel"] ?? "gpt-5",
             RequireApproval: bool.TryParse(section["RequireApproval"], out var requireApproval) ? requireApproval : true,
             MaxParallelAgents: int.TryParse(section["MaxParallelAgents"], out var maxParallelAgents) ? maxParallelAgents : 4,
+            ProviderBaseUrl: section["ProviderBaseUrl"] ?? configuration["OpenAICompatible:BaseUrl"] ?? configuration["Ollama:BaseUrl"],
+            HasApiKey: !string.IsNullOrWhiteSpace(configuration["OpenAICompatible:ApiKey"]),
             BuildCommandOverride: NullIfEmpty(section["BuildCommandOverride"]),
             TestCommandOverride: NullIfEmpty(section["TestCommandOverride"]));
     }

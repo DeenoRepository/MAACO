@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IProjectsClient, ProjectsClient>();
         services.AddSingleton<ITasksClient, TasksClient>();
         services.AddSingleton<IWorkflowsClient, WorkflowsClient>();
+        services.AddSingleton<ISettingsClient, SettingsClient>();
 
         services.AddHttpClient<IApiClient, ApiClient>(client =>
         {
@@ -31,6 +32,11 @@ public static class ServiceCollectionExtensions
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         services.AddHttpClient<IWorkflowsClient, WorkflowsClient>(client =>
+        {
+            client.BaseAddress = new Uri("http://localhost:5168/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddHttpClient<ISettingsClient, SettingsClient>(client =>
         {
             client.BaseAddress = new Uri("http://localhost:5168/");
             client.Timeout = TimeSpan.FromSeconds(30);

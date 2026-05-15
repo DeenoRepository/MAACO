@@ -23,14 +23,15 @@
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Model" VerticalAlignment="Center" />
                     <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Model}" />
 
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Timeout (sec)" VerticalAlignment="Center" />
-                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding TimeoutSeconds}" />
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="API Key" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ProviderApiKey}" PasswordChar="*" />
 
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Approval required" VerticalAlignment="Center" />
                     <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding ApprovalRequired}" />
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Reload" Command="{Binding LoadSettingsCommand}" />
                     <Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
                     <Button Classes="primary" Content="Save" Command="{Binding SaveSettingsCommand}" />
                 </StackPanel>

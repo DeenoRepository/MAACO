@@ -524,6 +524,8 @@ public sealed record DiffLineViewModel(
 
 public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
 {
+    private readonly ISettingsClient settingsClient;
+
     public string Title => "Settings";
     public string Description => "Provider, timeout, and approval mode settings.";
 
@@ -537,7 +539,7 @@ public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
     private string model = "llama3.1";
 
     [ObservableProperty]
-    private string timeoutSeconds = "120";
+    private string providerApiKey = string.Empty;
 
     [ObservableProperty]
     private bool approvalRequired = true;
@@ -547,16 +549,78 @@ public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
 
     public IReadOnlyList<string> Providers { get; } = ["OpenAI-compatible", "Ollama", "Fake"];
 
-    [RelayCommand]
-    private void TestConnection()
+    public SettingsViewModel(ISettingsClient settingsClient)
     {
-        SettingsStatus = $"Connection test simulated for {SelectedProvider} at {DateTimeOffset.Now:HH:mm:ss}.";
+        this.settingsClient = settingsClient;
+        _ = LoadSettingsCommand.ExecuteAsync(null);
     }
 
     [RelayCommand]
-    private void SaveSettings()
+    private async Task LoadSettingsAsync()
     {
-        SettingsStatus = $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}.";
+        var settings = await settingsClient.GetSettingsAsync(CancellationToken.None);
+        if (settings is null)
+        {
+            SettingsStatus = "Failed to load settings from backend.";
+            return;
+        }
+
+        SelectedProvider = settings.LlmProvider;
+        Model = settings.LlmModel;
+        ApprovalRequired = settings.RequireApproval;
+        BaseUrl = settings.ProviderBaseUrl ?? BaseUrl;
+        ProviderApiKey = string.Empty;
+        SettingsStatus = settings.HasApiKey
+            ? "Settings loaded. API key is stored (hidden)."
+            : "Settings loaded. API key is not set.";
+    }
+
+    [RelayCommand]
+    private async Task TestConnectionAsync()
+    {
+        var result = await settingsClient.TestConnectionAsync(
+            new ProviderConnectionTestRequest(
+                LlmProvider: SelectedProvider,
+                LlmModel: Model,
+                ProviderBaseUrl: BaseUrl,
+                ApiKey: string.IsNullOrWhiteSpace(ProviderApiKey) ? null : ProviderApiKey),
+            CancellationToken.None);
+
+        if (result is null)
+        {
+            SettingsStatus = "Connection test failed: backend request error.";
+            return;
+        }
+
+        var modeLabel = result.IsSimulation ? "simulation" : "real provider";
+        SettingsStatus = $"[{modeLabel}] {result.Message}";
+    }
+
+    [RelayCommand]
+    private async Task SaveSettingsAsync()
+    {
+        var updated = await settingsClient.UpdateSettingsAsync(
+            new UpdateSettingsRequest(
+                LlmProvider: SelectedProvider,
+                LlmModel: Model,
+                RequireApproval: ApprovalRequired,
+                MaxParallelAgents: 4,
+                ProviderBaseUrl: BaseUrl,
+                ApiKey: string.IsNullOrWhiteSpace(ProviderApiKey) ? null : ProviderApiKey,
+                BuildCommandOverride: null,
+                TestCommandOverride: null),
+            CancellationToken.None);
+
+        if (updated is null)
+        {
+            SettingsStatus = "Failed to save settings.";
+            return;
+        }
+
+        ProviderApiKey = string.Empty;
+        SettingsStatus = updated.HasApiKey
+            ? $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}. API key stored."
+            : $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}.";
     }
 }
 

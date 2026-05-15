@@ -947,6 +947,7 @@ User Task
 - [x] Хранить настройки в appsettings + DB override
 - [x] Endpoint `GET /api/settings`
 - [x] Endpoint `PUT /api/settings`
+- [x] Endpoint `POST /api/settings/test-connection` (real provider connectivity check)
 - [x] Validate settings
 
 ## UI settings

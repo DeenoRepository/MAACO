@@ -58,9 +58,9 @@ Open **Settings** screen in UI.
 
 1. Select provider: `OpenAI-compatible`.
 2. Set `Base URL`.
-3. Set `API Key`.
+3. Set `API Key` in Settings UI field (stored server-side; never returned in plain text).
 4. Set model name.
-5. Click **Test connection**.
+5. Click **Test connection** (this performs a real provider connectivity check via backend, not Fake simulation).
 6. Save settings.
 
 ### Ollama
@@ -68,7 +68,7 @@ Open **Settings** screen in UI.
 1. Select provider: `Ollama`.
 2. Set `Base URL` (usually `http://localhost:11434`).
 3. Set model name available in local Ollama.
-4. Click **Test connection**.
+4. Click **Test connection** (backend calls Ollama API directly, `isSimulation=false`).
 5. Save settings.
 
 Provider selection is also read from config/env at API startup (`Maaco:Settings:LlmProvider`, `Maaco:Settings:LlmModel`).

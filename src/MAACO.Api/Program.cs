@@ -34,6 +34,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
 builder.Services.AddControllers();
 builder.Services.AddSingleton<ISettingsService, AppSettingsDbOverrideSettingsService>();
+builder.Services.AddSingleton<IProviderConnectionTestService, ProviderConnectionTestService>();
 builder.Services.AddSingleton<IProjectPathValidator, ProjectPathValidator>();
 builder.Services.AddSingleton<IProjectScanner, ProjectScanner>();
 builder.Services.AddSingleton<IProjectStackDetector, ProjectStackDetector>();

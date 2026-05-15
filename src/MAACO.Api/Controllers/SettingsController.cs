@@ -10,6 +10,7 @@ namespace MAACO.Api.Controllers;
 [Route("api/settings")]
 public sealed class SettingsController(
     ISettingsService settingsService,
+    IProviderConnectionTestService providerConnectionTestService,
     IValidator<UpdateSettingsRequest> updateSettingsRequestValidator) : ControllerBase
 {
     [HttpGet]
@@ -36,6 +37,16 @@ public sealed class SettingsController(
 
         var settings = await settingsService.UpdateAsync(request, cancellationToken);
         return Ok(settings);
+    }
+
+    [HttpPost("test-connection")]
+    [ProducesResponseType(typeof(ProviderConnectionTestResultDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ProviderConnectionTestResultDto>> TestConnection(
+        [FromBody] TestProviderConnectionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await providerConnectionTestService.TestAsync(request, cancellationToken);
+        return Ok(result);
     }
 }
 

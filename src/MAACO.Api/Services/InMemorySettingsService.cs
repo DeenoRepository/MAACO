@@ -9,6 +9,8 @@ public sealed class InMemorySettingsService : ISettingsService
         LlmModel: "gpt-5",
         RequireApproval: true,
         MaxParallelAgents: 4,
+        ProviderBaseUrl: "https://api.openai.com/v1",
+        HasApiKey: false,
         BuildCommandOverride: null,
         TestCommandOverride: null);
 
@@ -22,6 +24,8 @@ public sealed class InMemorySettingsService : ISettingsService
             request.LlmModel.Trim(),
             request.RequireApproval,
             request.MaxParallelAgents,
+            string.IsNullOrWhiteSpace(request.ProviderBaseUrl) ? null : request.ProviderBaseUrl.Trim(),
+            !string.IsNullOrWhiteSpace(request.ApiKey),
             string.IsNullOrWhiteSpace(request.BuildCommandOverride) ? null : request.BuildCommandOverride.Trim(),
             string.IsNullOrWhiteSpace(request.TestCommandOverride) ? null : request.TestCommandOverride.Trim());
 
