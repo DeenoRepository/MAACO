@@ -1052,11 +1052,11 @@ User Task
 
 ## Retry policies
 
-- [ ] Retry LLM transient errors
+- [x] Retry LLM transient errors
 - [ ] Retry tool transient errors
-- [ ] No retry for validation errors
-- [ ] Exponential backoff
-- [ ] Max retry count
+- [x] No retry for validation errors
+- [x] Exponential backoff
+- [x] Max retry count
 
 ## Rollback
 
@@ -1070,7 +1070,7 @@ User Task
 - [ ] Restart не теряет состояние
 - [ ] Failed workflow диагностируем
 - [ ] Rollback работает
-- [ ] Retry не зацикливается
+- [x] Retry не зацикливается
 
 ---
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
