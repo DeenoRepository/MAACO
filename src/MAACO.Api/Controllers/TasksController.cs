@@ -227,13 +227,15 @@ public sealed class TasksController(
             },
             cancellationToken);
 
+        var patchCleanupCount = await CleanupUnappliedPatchArtifactsAsync(workflow, task, cancellationToken);
+
         await artifactRepository.AddAsync(
             new Artifact
             {
                 TaskId = task.Id,
                 Type = MAACO.Core.Domain.Enums.ArtifactType.Snapshot,
                 Path = $"rollback://task/{task.Id:D}",
-                Hash = $"workflow:{workflow.Id:D};status:{workflow.Status};reason:{request?.Reason?.Trim() ?? "none"}"
+                Hash = $"workflow:{workflow.Id:D};status:{workflow.Status};reason:{request?.Reason?.Trim() ?? "none"};unappliedPatchCleanup:{patchCleanupCount}"
             },
             cancellationToken);
 
@@ -246,6 +248,66 @@ public sealed class TasksController(
             id,
             "RolledBack",
             $"Rollback executed after approval.{reasonSuffix}"));
+    }
+
+    private async Task<int> CleanupUnappliedPatchArtifactsAsync(
+        Workflow workflow,
+        TaskItem task,
+        CancellationToken cancellationToken)
+    {
+        var artifacts = await artifactRepository.ListByTaskIdAsync(task.Id, cancellationToken);
+        var patchArtifacts = artifacts
+            .Where(x =>
+                x.Type == MAACO.Core.Domain.Enums.ArtifactType.Patch &&
+                x.Hash?.Contains($"workflow={workflow.Id:D}", StringComparison.OrdinalIgnoreCase) == true)
+            .ToList();
+
+        if (patchArtifacts.Count == 0)
+        {
+            return 0;
+        }
+
+        var logs = await logRepository.ListByWorkflowIdAsync(workflow.Id, cancellationToken);
+        var patchWasApplied = logs.Any(x => x.Message.Contains("PatchApplied=True", StringComparison.Ordinal));
+        if (patchWasApplied)
+        {
+            return 0;
+        }
+
+        var cleaned = 0;
+        foreach (var patchArtifact in patchArtifacts)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(patchArtifact.Path) &&
+                    System.IO.File.Exists(patchArtifact.Path))
+                {
+                    System.IO.File.Delete(patchArtifact.Path);
+                }
+
+                cleaned++;
+            }
+            catch
+            {
+                // Best-effort cleanup; rollback should proceed even if patch file cleanup fails.
+            }
+        }
+
+        if (cleaned > 0)
+        {
+            await logRepository.AddAsync(
+                new LogEvent
+                {
+                    WorkflowId = workflow.Id,
+                    TaskId = task.Id,
+                    Severity = MAACO.Core.Domain.Enums.LogSeverity.Information,
+                    Message = $"Rollback cleanup removed {cleaned} unapplied patch artifact file(s).",
+                    CorrelationId = $"approval-rollback-{task.Id:D}"
+                },
+                cancellationToken);
+        }
+
+        return cleaned;
     }
 
     private static TaskDto Map(TaskItem task) =>

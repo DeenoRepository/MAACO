@@ -19,113 +19,140 @@ public sealed class RollbackWorkflowIntegrationTests
     [Fact]
     public async Task RollbackTask_WhenRejected_MarksRolledBackAndPersistsRollbackArtifact()
     {
+        var rollbackWorkspace = Path.Combine(Path.GetTempPath(), $"maaco-rollback-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(rollbackWorkspace);
+        var patchFilePath = Path.Combine(rollbackWorkspace, "debug-patch.json");
+        await File.WriteAllTextAsync(patchFilePath, "{\"patch\":\"pending\"}", CancellationToken.None);
+
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
-        var services = new ServiceCollection();
-        services.AddMaacoPersistence("Data Source=:memory:");
-        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
-        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
-
-        await using var provider = services.BuildServiceProvider();
-        await using (var initScope = provider.CreateAsyncScope())
+        try
         {
-            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
-            await db.Database.EnsureCreatedAsync();
-        }
+            var services = new ServiceCollection();
+            services.AddMaacoPersistence("Data Source=:memory:");
+            services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+            services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
 
-        Guid taskId;
-        Guid workflowId;
-        await using (var runScope = provider.CreateAsyncScope())
-        {
-            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
-            var project = new Project
+            await using var provider = services.BuildServiceProvider();
+            await using (var initScope = provider.CreateAsyncScope())
             {
-                Name = "rollback-project",
-                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
-            };
-            await db.Projects.AddAsync(project);
-            await db.SaveChangesAsync();
+                var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                await db.Database.EnsureCreatedAsync();
+            }
 
-            var task = new TaskItem
+            Guid taskId;
+            Guid workflowId;
+            await using (var runScope = provider.CreateAsyncScope())
             {
-                ProjectId = project.Id,
-                Title = "rollback-task",
-                Status = DomainTaskStatus.WaitingForApproval
-            };
-            await db.TaskItems.AddAsync(task);
-            await db.SaveChangesAsync();
-            taskId = task.Id;
-
-            var workflow = new Workflow
-            {
-                TaskId = task.Id,
-                Status = WorkflowStatus.WaitingForApproval
-            };
-            await db.Workflows.AddAsync(workflow);
-            await db.SaveChangesAsync();
-            workflowId = workflow.Id;
-
-            await db.WorkflowSteps.AddRangeAsync(
-                new WorkflowStep
+                var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                var project = new Project
                 {
-                    WorkflowId = workflow.Id,
-                    Name = "CommitStep",
-                    Status = WorkflowStepStatus.Pending,
-                    Order = 1
-                },
-                new WorkflowStep
+                    Name = "rollback-project",
+                    RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(rollbackWorkspace)
+                };
+                await db.Projects.AddAsync(project);
+                await db.SaveChangesAsync();
+
+                var task = new TaskItem
                 {
-                    WorkflowId = workflow.Id,
-                    Name = "RollbackStep",
-                    Status = WorkflowStepStatus.Pending,
-                    Order = 2
-                });
-            await db.SaveChangesAsync();
+                    ProjectId = project.Id,
+                    Title = "rollback-task",
+                    Status = DomainTaskStatus.WaitingForApproval
+                };
+                await db.TaskItems.AddAsync(task);
+                await db.SaveChangesAsync();
+                taskId = task.Id;
+
+                var workflow = new Workflow
+                {
+                    TaskId = task.Id,
+                    Status = WorkflowStatus.WaitingForApproval
+                };
+                await db.Workflows.AddAsync(workflow);
+                await db.SaveChangesAsync();
+                workflowId = workflow.Id;
+
+                await db.WorkflowSteps.AddRangeAsync(
+                    new WorkflowStep
+                    {
+                        WorkflowId = workflow.Id,
+                        Name = "CommitStep",
+                        Status = WorkflowStepStatus.Pending,
+                        Order = 1
+                    },
+                    new WorkflowStep
+                    {
+                        WorkflowId = workflow.Id,
+                        Name = "RollbackStep",
+                        Status = WorkflowStepStatus.Pending,
+                        Order = 2
+                    });
+
+                await db.Artifacts.AddAsync(
+                    new Artifact
+                    {
+                        TaskId = task.Id,
+                        Type = ArtifactType.Patch,
+                        Path = patchFilePath,
+                        Hash = $"workflow={workflow.Id:D};target=sample.txt"
+                    });
+                await db.SaveChangesAsync();
+            }
+
+            await using (var actionScope = provider.CreateAsyncScope())
+            {
+                var taskRepository = actionScope.ServiceProvider.GetRequiredService<ITaskRepository>();
+                var projectRepository = actionScope.ServiceProvider.GetRequiredService<IProjectRepository>();
+                var workflowRepository = actionScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+                var artifactRepository = actionScope.ServiceProvider.GetRequiredService<IArtifactRepository>();
+                var logRepository = actionScope.ServiceProvider.GetRequiredService<ILogRepository>();
+                var validator = new Mock<IValidator<CreateTaskRequest>>().Object;
+
+                var controller = new TasksController(
+                    taskRepository,
+                    projectRepository,
+                    workflowRepository,
+                    artifactRepository,
+                    logRepository,
+                    validator);
+
+                var response = await controller.RollbackTask(
+                    taskId,
+                    new TasksController.RejectTaskRequest("manual reject"),
+                    CancellationToken.None);
+
+                Assert.NotNull(response.Result);
+            }
+
+            await using (var verifyScope = provider.CreateAsyncScope())
+            {
+                var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+                var task = await db.TaskItems.SingleAsync(x => x.Id == taskId);
+                var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
+                var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).ToListAsync();
+                var artifacts = await db.Artifacts.Where(x => x.TaskId == taskId).ToListAsync();
+                var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+                var rollbackArtifact = artifacts.FirstOrDefault(x => x.Path.StartsWith("rollback://task/", StringComparison.Ordinal));
+                var rollbackLog = logs.FirstOrDefault(x => x.Message.Contains("Rollback executed", StringComparison.Ordinal));
+                var cleanupLog = logs.FirstOrDefault(x => x.Message.Contains("Rollback cleanup removed", StringComparison.Ordinal));
+
+                Assert.Equal(DomainTaskStatus.RolledBack, task.Status);
+                Assert.Equal(WorkflowStatus.RolledBack, workflow.Status);
+                Assert.Contains(steps, x => x.Name == "RollbackStep" && x.Status == WorkflowStepStatus.Completed);
+                Assert.Contains(steps, x => x.Name == "CommitStep" && x.Status == WorkflowStepStatus.Cancelled);
+                Assert.NotNull(rollbackArtifact);
+                Assert.NotNull(rollbackLog);
+                Assert.NotNull(cleanupLog);
+                Assert.False(File.Exists(patchFilePath));
+            }
         }
-
-        await using (var actionScope = provider.CreateAsyncScope())
+        finally
         {
-            var taskRepository = actionScope.ServiceProvider.GetRequiredService<ITaskRepository>();
-            var projectRepository = actionScope.ServiceProvider.GetRequiredService<IProjectRepository>();
-            var workflowRepository = actionScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
-            var artifactRepository = actionScope.ServiceProvider.GetRequiredService<IArtifactRepository>();
-            var logRepository = actionScope.ServiceProvider.GetRequiredService<ILogRepository>();
-            var validator = new Mock<IValidator<CreateTaskRequest>>().Object;
-
-            var controller = new TasksController(
-                taskRepository,
-                projectRepository,
-                workflowRepository,
-                artifactRepository,
-                logRepository,
-                validator);
-
-            var response = await controller.RollbackTask(
-                taskId,
-                new TasksController.RejectTaskRequest("manual reject"),
-                CancellationToken.None);
-
-            Assert.NotNull(response.Result);
-        }
-
-        await using (var verifyScope = provider.CreateAsyncScope())
-        {
-            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
-            var task = await db.TaskItems.SingleAsync(x => x.Id == taskId);
-            var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
-            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).ToListAsync();
-            var artifacts = await db.Artifacts.Where(x => x.TaskId == taskId).ToListAsync();
-            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
-            var rollbackArtifact = artifacts.FirstOrDefault(x => x.Path.StartsWith("rollback://task/", StringComparison.Ordinal));
-            var rollbackLog = logs.FirstOrDefault(x => x.Message.Contains("Rollback executed", StringComparison.Ordinal));
-
-            Assert.Equal(DomainTaskStatus.RolledBack, task.Status);
-            Assert.Equal(WorkflowStatus.RolledBack, workflow.Status);
-            Assert.Contains(steps, x => x.Name == "RollbackStep" && x.Status == WorkflowStepStatus.Completed);
-            Assert.Contains(steps, x => x.Name == "CommitStep" && x.Status == WorkflowStepStatus.Cancelled);
-            Assert.NotNull(rollbackArtifact);
-            Assert.NotNull(rollbackLog);
+            if (Directory.Exists(rollbackWorkspace))
+            {
+                Directory.Delete(rollbackWorkspace, recursive: true);
+            }
         }
     }
 }

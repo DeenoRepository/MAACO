@@ -1060,7 +1060,7 @@ User Task
 
 ## Rollback
 
-- [ ] Rollback unapplied patch
+- [x] Rollback unapplied patch
 - [x] Rollback uncommitted changes
 - [x] Rollback rejected workflow
 - [x] Preserve failure artifacts
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
