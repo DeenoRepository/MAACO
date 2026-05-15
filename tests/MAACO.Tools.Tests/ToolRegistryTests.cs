@@ -161,6 +161,48 @@ public sealed class ToolRegistryTests
         Assert.Contains("cancelled", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_RetriesTransientToolFailures_ThenSucceeds()
+    {
+        var transientTool = new TransientFailThenSuccessTool(failuresBeforeSuccess: 2);
+        var registry = new ToolRegistry(
+            [transientTool],
+            NullLogger<ToolRegistry>.Instance);
+
+        var request = new ToolRequest(
+            "TransientFailThenSuccessTool",
+            "{}",
+            "D:\\Projects\\MAACO",
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-transient-retry");
+
+        var result = await registry.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(3, transientTool.Attempts);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_DoesNotRetryValidationFailures()
+    {
+        var validationTool = new ValidationFailureTool();
+        var registry = new ToolRegistry(
+            [validationTool],
+            NullLogger<ToolRegistry>.Instance);
+
+        var request = new ToolRequest(
+            "ValidationFailureTool",
+            "{}",
+            "D:\\Projects\\MAACO",
+            [ToolPermission.ReadOnly],
+            CorrelationId: "corr-no-retry-validation");
+
+        var result = await registry.ExecuteAsync(request, CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(1, validationTool.Attempts);
+    }
+
     private sealed class SuccessTool : IAgentTool
     {
         public string Name => "SuccessTool";
@@ -211,5 +253,51 @@ public sealed class ToolRegistryTests
         }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
+
+    private sealed class TransientFailThenSuccessTool(int failuresBeforeSuccess) : IAgentTool
+    {
+        public string Name => "TransientFailThenSuccessTool";
+        public IReadOnlyCollection<ToolPermission> RequiredPermissions => [ToolPermission.ReadOnly];
+        public int Attempts { get; private set; }
+
+        public Task<ToolResult> ExecuteAsync(ToolRequest request, CancellationToken cancellationToken)
+        {
+            Attempts++;
+            if (Attempts <= failuresBeforeSuccess)
+            {
+                return Task.FromResult(new ToolResult(
+                    false,
+                    string.Empty,
+                    "Transient network timeout.",
+                    TimeSpan.Zero,
+                    CorrelationId: request.CorrelationId));
+            }
+
+            return Task.FromResult(new ToolResult(
+                true,
+                "ok",
+                null,
+                TimeSpan.Zero,
+                CorrelationId: request.CorrelationId));
+        }
+    }
+
+    private sealed class ValidationFailureTool : IAgentTool
+    {
+        public string Name => "ValidationFailureTool";
+        public IReadOnlyCollection<ToolPermission> RequiredPermissions => [ToolPermission.ReadOnly];
+        public int Attempts { get; private set; }
+
+        public Task<ToolResult> ExecuteAsync(ToolRequest request, CancellationToken cancellationToken)
+        {
+            Attempts++;
+            return Task.FromResult(new ToolResult(
+                false,
+                string.Empty,
+                "Validation failed: invalid input.",
+                TimeSpan.Zero,
+                CorrelationId: request.CorrelationId));
+        }
     }
 }

@@ -1053,7 +1053,7 @@ User Task
 ## Retry policies
 
 - [x] Retry LLM transient errors
-- [ ] Retry tool transient errors
+- [x] Retry tool transient errors
 - [x] No retry for validation errors
 - [x] Exponential backoff
 - [x] Max retry count
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 

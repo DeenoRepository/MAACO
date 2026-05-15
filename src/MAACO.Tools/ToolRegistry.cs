@@ -14,6 +14,7 @@ public sealed class ToolRegistry(
     IToolExecutionRepository? toolExecutionRepository = null) : IToolRegistry
 {
     private const int MaxLoggedTextLength = 4000;
+    private const int ToolTransientRetryCount = 2;
 
     private readonly Dictionary<string, IAgentTool> toolMap = tools.ToDictionary(
         x => x.Name,
@@ -72,7 +73,10 @@ public sealed class ToolRegistry(
 
         try
         {
-            var result = await tool.ExecuteAsync(request, linkedCts.Token);
+            var result = await ExecuteWithTransientRetryAsync(
+                tool,
+                request,
+                linkedCts.Token);
             var safeOutput = PrepareForLog(result.Output);
             var safeError = PrepareForLog(result.Error);
             await UpdateExecutionRecordAsync(
@@ -148,6 +152,42 @@ public sealed class ToolRegistry(
                 Duration: DateTimeOffset.UtcNow - startedAt,
                 CorrelationId: request.CorrelationId);
         }
+    }
+
+    private async Task<ToolResult> ExecuteWithTransientRetryAsync(
+        IAgentTool tool,
+        ToolRequest request,
+        CancellationToken cancellationToken)
+    {
+        Exception? lastException = null;
+        var attempts = ToolTransientRetryCount + 1;
+
+        for (var attempt = 1; attempt <= attempts; attempt++)
+        {
+            try
+            {
+                var result = await tool.ExecuteAsync(request, cancellationToken);
+                if (result.Succeeded || !IsTransientToolFailure(result))
+                {
+                    return result;
+                }
+
+                if (attempt < attempts)
+                {
+                    await DelayWithBackoffAsync(attempt, cancellationToken);
+                    continue;
+                }
+
+                return result;
+            }
+            catch (Exception ex) when (attempt < attempts && IsTransientException(ex))
+            {
+                lastException = ex;
+                await DelayWithBackoffAsync(attempt, cancellationToken);
+            }
+        }
+
+        throw lastException ?? new InvalidOperationException("Tool execution failed after retries.");
     }
 
     private static bool HasPermissions(
@@ -273,5 +313,89 @@ public sealed class ToolRegistry(
         {
             return null;
         }
+    }
+
+    private static bool IsTransientToolFailure(ToolResult result)
+    {
+        if (result.TimedOut)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(result.Error))
+        {
+            return false;
+        }
+
+        if (IsValidationError(result.Error))
+        {
+            return false;
+        }
+
+        return ContainsAny(
+            result.Error,
+            "transient",
+            "temporar",
+            "timeout",
+            "timed out",
+            "throttle",
+            "rate limit",
+            "too many requests",
+            "unavailable",
+            "connection reset",
+            "network");
+    }
+
+    private static bool IsTransientException(Exception ex)
+    {
+        if (ex is TimeoutException or HttpRequestException or IOException)
+        {
+            return true;
+        }
+
+        if (ex is OperationCanceledException)
+        {
+            return true;
+        }
+
+        return ContainsAny(
+            ex.Message,
+            "transient",
+            "temporar",
+            "timeout",
+            "throttle",
+            "rate limit",
+            "too many requests",
+            "unavailable",
+            "connection reset",
+            "network");
+    }
+
+    private static bool IsValidationError(string error) =>
+        ContainsAny(
+            error,
+            "validation",
+            "invalid",
+            "unprocessable",
+            "bad request");
+
+    private static bool ContainsAny(string value, params string[] markers)
+    {
+        foreach (var marker in markers)
+        {
+            if (value.Contains(marker, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static Task DelayWithBackoffAsync(int attempt, CancellationToken cancellationToken)
+    {
+        var exponent = Math.Max(0, attempt - 1);
+        var delayMs = Math.Min(100 * Math.Pow(2, exponent), 1000);
+        return Task.Delay(TimeSpan.FromMilliseconds(delayMs), cancellationToken);
     }
 }
