@@ -110,4 +110,91 @@ public sealed class WorkflowRecoveryApiTests
             Assert.Contains("failed", dto.FailureReason!, StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    [Fact]
+    public async Task RestartScope_PreservesWorkflowStateAndDiagnosticsArtifacts()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var services = new ServiceCollection();
+        services.AddMaacoPersistence("Data Source=:memory:");
+        services.AddMaacoInfrastructure();
+        services.AddDbContext<MaacoDbContext>(options => options.UseSqlite(connection));
+        services.AddDbContextFactory<MaacoDbContext>(options => options.UseSqlite(connection));
+
+        await using var provider = services.BuildServiceProvider();
+        await using (var initScope = provider.CreateAsyncScope())
+        {
+            var db = initScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            await db.Database.EnsureCreatedAsync();
+        }
+
+        provider.UseMaacoInfrastructure();
+        Guid workflowId;
+        Guid taskId;
+
+        await using (var runScope = provider.CreateAsyncScope())
+        {
+            var db = runScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var project = new Project
+            {
+                Name = "restart-state-project",
+                RepositoryPath = new MAACO.Core.Domain.ValueObjects.RepositoryPath(".")
+            };
+            await db.Projects.AddAsync(project);
+            await db.SaveChangesAsync();
+
+            var task = new TaskItem
+            {
+                ProjectId = project.Id,
+                Title = "restart-state-task"
+            };
+            await db.TaskItems.AddAsync(task);
+            await db.SaveChangesAsync();
+            taskId = task.Id;
+
+            var workflowRepository = runScope.ServiceProvider.GetRequiredService<IWorkflowRepository>();
+            var workflow = new Workflow
+            {
+                TaskId = task.Id,
+                Status = WorkflowStatus.Created
+            };
+            await workflowRepository.AddWorkflowAsync(workflow, CancellationToken.None);
+            await workflowRepository.SaveChangesAsync(CancellationToken.None);
+            workflowId = workflow.Id;
+
+            var orchestrator = runScope.ServiceProvider.GetRequiredService<IWorkflowOrchestrator>();
+            await Assert.ThrowsAnyAsync<Exception>(() =>
+                orchestrator.ExecuteAsync(
+                    new WorkflowExecutionContext(
+                        project.Id,
+                        task.Id,
+                        workflowId,
+                        "restart-state-check",
+                        "corr-restart-state",
+                        new Dictionary<string, string>
+                        {
+                            ["BuildFailAttempts"] = "5",
+                            ["MaxDebugRetries"] = "3"
+                        }),
+                    ["BuildStep", "TestStep"],
+                    CancellationToken.None));
+        }
+
+        // Emulate restart.
+        await using (var verifyScope = provider.CreateAsyncScope())
+        {
+            var db = verifyScope.ServiceProvider.GetRequiredService<MaacoDbContext>();
+            var workflow = await db.Workflows.SingleAsync(x => x.Id == workflowId);
+            var steps = await db.WorkflowSteps.Where(x => x.WorkflowId == workflowId).ToListAsync();
+            var logs = await db.LogEvents.Where(x => x.WorkflowId == workflowId).ToListAsync();
+
+            Assert.Equal(WorkflowStatus.Failed, workflow.Status);
+            Assert.NotEmpty(steps);
+            Assert.Contains(steps, x => x.Status == WorkflowStepStatus.Failed);
+            Assert.NotEmpty(logs);
+            Assert.Contains(logs, x => x.Severity == LogSeverity.Error);
+        }
+    }
 }

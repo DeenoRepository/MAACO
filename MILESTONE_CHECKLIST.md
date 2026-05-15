@@ -1067,8 +1067,8 @@ User Task
 
 ### Acceptance Criteria
 
-- [ ] Restart не теряет состояние
-- [ ] Failed workflow диагностируем
+- [x] Restart не теряет состояние
+- [x] Failed workflow диагностируем
 - [x] Rollback работает
 - [x] Retry не зацикливается
 
@@ -1257,7 +1257,6 @@ User Task
 22. Milestone 21 — Testing
 23. Milestone 22 — Documentation
 24. Milestone 23 — MVP Release
-
 
 
 
