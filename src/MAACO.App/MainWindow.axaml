@@ -14,7 +14,7 @@
         MinHeight="760">
     <Window.DataTemplates>
         <DataTemplate DataType="vm:DashboardViewModel">
-            <views:ScreenView />
+            <views:DashboardView />
         </DataTemplate>
         <DataTemplate DataType="vm:ProjectsViewModel">
             <views:ProjectsView />
@@ -29,10 +29,10 @@
             <views:DiffReviewView />
         </DataTemplate>
         <DataTemplate DataType="vm:SettingsViewModel">
-            <views:ScreenView />
+            <views:SettingsView />
         </DataTemplate>
         <DataTemplate DataType="vm:LogsViewModel">
-            <views:ScreenView />
+            <views:LogsView />
         </DataTemplate>
     </Window.DataTemplates>
 

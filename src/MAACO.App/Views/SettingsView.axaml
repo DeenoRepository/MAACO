@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:SettingsViewModel"
+             x:Class="MAACO.App.Views.SettingsView">
+    <StackPanel Spacing="12">
+        <Border Classes="card" Padding="14">
+            <StackPanel Spacing="8">
+                <TextBlock Text="Runtime Settings" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="Configure provider, endpoint and execution policy." Classes="muted" />
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card" Padding="14">
+            <StackPanel Spacing="12">
+                <Grid ColumnDefinitions="180,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Provider" VerticalAlignment="Center" />
+                    <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Base URL" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding BaseUrl}" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Model" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Model}" />
+
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Timeout (sec)" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding TimeoutSeconds}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Approval required" VerticalAlignment="Center" />
+                    <CheckBox Grid.Row="4" Grid.Column="1" IsChecked="{Binding ApprovalRequired}" />
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
+                    <Button Classes="primary" Content="Save" Command="{Binding SaveSettingsCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="card" Padding="12">
+            <TextBlock Text="{Binding SettingsStatus}" TextWrapping="Wrap" Classes="muted" />
+        </Border>
+    </StackPanel>
+</UserControl>

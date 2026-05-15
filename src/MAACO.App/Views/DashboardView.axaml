@@ -1,0 +1,40 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:DashboardViewModel"
+             x:Class="MAACO.App.Views.DashboardView">
+    <StackPanel Spacing="12">
+        <Border Classes="card" Padding="14">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <StackPanel>
+                    <TextBlock Text="Operations Overview" FontSize="16" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding Description}" Classes="muted" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshOverviewCommand}" />
+            </Grid>
+        </Border>
+
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <Border Grid.Column="0" Classes="card" Padding="12">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="API Health" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding ApiHealthSummary}" TextWrapping="Wrap" Classes="muted" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="1" Classes="card" Padding="12">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Workflow Pipeline" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding WorkflowSummary}" TextWrapping="Wrap" Classes="muted" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Classes="card" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Approval Flow" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ApprovalSummary}" TextWrapping="Wrap" Classes="muted" />
+                <TextBlock Text="Last refresh: {Binding LastRefresh}" Classes="muted" />
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

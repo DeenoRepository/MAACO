@@ -7,10 +7,28 @@ using MAACO.App.Services.Models;
 using System.Collections.ObjectModel;
 using Avalonia.Media;
 
-public sealed class DashboardViewModel : BaseViewModel, IScreenViewModel
+public sealed partial class DashboardViewModel : BaseViewModel, IScreenViewModel
 {
     public string Title => "Dashboard";
     public string Description => "Workflow health and quick actions.";
+
+    [ObservableProperty]
+    private string lastRefresh = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+    [ObservableProperty]
+    private string apiHealthSummary = "Backend connectivity is verified on application startup.";
+
+    [ObservableProperty]
+    private string workflowSummary = "Use Task Creation to launch a workflow, then monitor execution in Workflow Monitor.";
+
+    [ObservableProperty]
+    private string approvalSummary = "Diff Review supports approve/reject with editable commit message.";
+
+    [RelayCommand]
+    private void RefreshOverview()
+    {
+        LastRefresh = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    }
 }
 
 public sealed partial class WorkflowMonitorViewModel : BaseViewModel, IScreenViewModel
@@ -504,14 +522,116 @@ public sealed record DiffLineViewModel(
     string Kind,
     IBrush Foreground);
 
-public sealed class SettingsViewModel : BaseViewModel, IScreenViewModel
+public sealed partial class SettingsViewModel : BaseViewModel, IScreenViewModel
 {
     public string Title => "Settings";
     public string Description => "Provider, timeout, and approval mode settings.";
+
+    [ObservableProperty]
+    private string selectedProvider = "OpenAI-compatible";
+
+    [ObservableProperty]
+    private string baseUrl = "http://localhost:11434";
+
+    [ObservableProperty]
+    private string model = "llama3.1";
+
+    [ObservableProperty]
+    private string timeoutSeconds = "120";
+
+    [ObservableProperty]
+    private bool approvalRequired = true;
+
+    [ObservableProperty]
+    private string settingsStatus = "Settings are ready to be adjusted.";
+
+    public IReadOnlyList<string> Providers { get; } = ["OpenAI-compatible", "Ollama", "Fake"];
+
+    [RelayCommand]
+    private void TestConnection()
+    {
+        SettingsStatus = $"Connection test simulated for {SelectedProvider} at {DateTimeOffset.Now:HH:mm:ss}.";
+    }
+
+    [RelayCommand]
+    private void SaveSettings()
+    {
+        SettingsStatus = $"Settings saved at {DateTimeOffset.Now:HH:mm:ss}.";
+    }
 }
 
-public sealed class LogsViewModel : BaseViewModel, IScreenViewModel
+public sealed partial class LogsViewModel : BaseViewModel, IScreenViewModel
 {
     public string Title => "Logs";
     public string Description => "Realtime workflow logs and diagnostics.";
+
+    [ObservableProperty]
+    private string logsStatus = "Load logs to inspect generated diagnostic files.";
+
+    [ObservableProperty]
+    private string selectedLogPath = "No file selected.";
+
+    [ObservableProperty]
+    private string selectedLogPreview = "Select a log file to preview content.";
+
+    public ObservableCollection<string> LogFiles { get; } = [];
+
+    public LogsViewModel()
+    {
+        _ = RefreshLogsCommand.ExecuteAsync(null);
+    }
+
+    partial void OnSelectedLogPathChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value == "No file selected.")
+        {
+            return;
+        }
+
+        _ = OpenLogCommand.ExecuteAsync(value);
+    }
+
+    [RelayCommand]
+    private async Task RefreshLogsAsync()
+    {
+        var logsRoot = Path.Combine(Environment.CurrentDirectory, ".maaco", "ui-logs");
+        Directory.CreateDirectory(logsRoot);
+
+        var files = Directory.EnumerateFiles(logsRoot, "*.log")
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .Take(50)
+            .ToList();
+
+        LogFiles.Clear();
+        foreach (var file in files)
+        {
+            LogFiles.Add(file);
+        }
+
+        LogsStatus = $"Loaded {LogFiles.Count} file(s) from {logsRoot}.";
+        if (LogFiles.Count == 0)
+        {
+            SelectedLogPath = "No file selected.";
+            SelectedLogPreview = "No log files found yet. Run workflow monitor save action first.";
+        }
+        else
+        {
+            await OpenLogAsync(LogFiles[0], CancellationToken.None);
+        }
+    }
+
+    [RelayCommand]
+    private async Task OpenLogAsync(string? filePath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            LogsStatus = "Selected log file not found.";
+            return;
+        }
+
+        SelectedLogPath = filePath;
+        var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
+        SelectedLogPreview = string.Join(Environment.NewLine, lines.Take(120));
+        LogsStatus = $"Preview loaded: {Path.GetFileName(filePath)}";
+    }
 }

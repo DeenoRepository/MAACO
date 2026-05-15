@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MAACO.App.ViewModels"
+             x:DataType="vm:LogsViewModel"
+             x:Class="MAACO.App.Views.LogsView">
+    <StackPanel Spacing="12">
+        <Border Classes="card" Padding="14">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Left" Text="Diagnostic Logs" FontSize="16" FontWeight="SemiBold" />
+                <Button DockPanel.Dock="Right" Content="Refresh" Command="{Binding RefreshLogsCommand}" />
+            </DockPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="2*,3*" ColumnSpacing="12">
+            <Border Grid.Column="0" Classes="card" Padding="10">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Saved Files" FontWeight="SemiBold" />
+                    <ListBox ItemsSource="{Binding LogFiles}" SelectedItem="{Binding SelectedLogPath}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding .}" TextWrapping="Wrap" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1" Classes="card" Padding="10">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Preview" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding SelectedLogPath}" Classes="muted" TextWrapping="Wrap" />
+                    <ScrollViewer Height="360">
+                        <TextBlock Text="{Binding SelectedLogPreview}" FontFamily="Cascadia Code, Consolas, monospace" TextWrapping="Wrap" />
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Classes="card" Padding="12">
+            <TextBlock Text="{Binding LogsStatus}" TextWrapping="Wrap" Classes="muted" />
+        </Border>
+    </StackPanel>
+</UserControl>
